@@ -13,6 +13,7 @@
 | `web/js/charts/intel-charts.js` | Intelligence D3 charts only; loaded via **`import()`** when charts render. |
 | `web/vite.config.js` | Vite root = `web/`. **`base: './'`** for portable `dist/`. Plugin **`serve-repo-output`** serves repo `../output` at **`/output/*`** in **`vite dev`** and **`vite preview`**. |
 | `web/package.json` | `npm run dev` \| `build` \| `preview`. |
+| `Dockerfile`, `docker-compose.yml`, `docker/nginx.conf` | **Production-like static serving:** Nginx + built `dist/` + **`/output/*` bind-mount** (same URL layout as `vite preview`). See **`docker/README.md`** for local smoke tests and Hostinger (VPS vs static). Root npm: `docker:build`, `docker:up`, `docker:test`. |
 
 ## Data contracts (`output/`)
 
@@ -40,6 +41,8 @@ npm run preview  # production build + same /output/* middleware
 ```
 
 For production hosting without Node, deploy **`dist/`** contents and ensure **`output/`** is available at the URL that **`../../output/`** resolves to relative to the served `index.html` (same layout as repo: parent of `web/` contains `output/`), or serve both behind one static origin with that path structure.
+
+**Docker / Hostinger:** From repo root, `docker compose up` serves the app at **`http://localhost:8080`** with **`./output` → `/output/`** (matches site root + `/output/` on a domain). Use **`docker compose --profile test run --rm smoke-test`** after `up` for a quick HTTP smoke check. On **Hostinger VPS**, run the same Compose stack; on **shared static hosting**, upload `dist/` to the document root and **`output/`** under **`public_html/output/`** so fetches hit `/output/*`. Details: **`docker/README.md`**.
 
 ## Where to edit for feature X
 
@@ -80,6 +83,8 @@ We use **`--skip-agents-md`** so this file is not overwritten; merge upstream AG
 **Cursor:** restart the IDE after changing `.cursor/mcp.json`. Ensure GitNexus MCP is enabled under **Settings → MCP**.
 
 **Global setup (optional):** `npx gitnexus setup` configures editors in your user profile; the committed `.cursor/mcp.json` is enough for Cursor in this workspace.
+
+**GitNexus Web UI (graph explorer):** from repo root run **`npm run gitnexus:serve`** (default **http://localhost:4747**). Open that URL in your browser, or open **[gitnexus.vercel.app](https://gitnexus.vercel.app)** — it can connect to the local server (“bridge” mode) so your indexed repos (including TMD) appear without re-uploading.
 
 **GitHub:** create an empty repository on GitHub, then:
 

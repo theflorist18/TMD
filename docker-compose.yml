@@ -1,0 +1,28 @@
+# Local / CI: production-like stack (Nginx serves Vite dist + repo output/ at /output/)
+# Hostinger VPS: same image and compose, or build once and `docker compose up -d`.
+services:
+  tmd:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${TMD_PORT:-8080}:80"
+    volumes:
+      # Bind-mount generated datasets (same layout as repo: output/ → /output/* in browser)
+      - ./output:/usr/share/nginx/html/output:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health | grep -q ok || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  smoke-test:
+    image: curlimages/curl:8.11.1
+    profiles: ["test"]
+    depends_on:
+      tmd:
+        condition: service_healthy
+    volumes:
+      - ./docker/smoke.sh:/smoke.sh:ro
+    entrypoint: ["/bin/sh", "/smoke.sh"]

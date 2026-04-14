@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TMD — Transparent Market Data</title>
 <meta name="description" content="TMD provides transparent IDX stock ownership data, investor intelligence, cross-ownership analysis, and market insights for the Indonesian stock exchange.">
+<link rel="icon" type="image/png" href="assets/TMD_Logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -24,7 +25,8 @@
 <header>
   <div class="header-inner">
     <a class="logo" href="#home" aria-label="Go to home page">
-      <span>TMD</span> — <span data-i18n="brand">Transparent Market Data</span>
+      <img class="brand-logo" src="assets/TMD_Logo.png" alt="" aria-hidden="true">
+      <span data-i18n="brand">Transparent Market Data</span>
     </a>
     <nav aria-label="Main navigation">
       <button class="nav-link active" data-page="home" onclick="navigate('home')" data-i18n="nav_home">Home</button>
@@ -49,6 +51,18 @@
     <div class="home-hero">
       <h1><span data-i18n="hero_title">Transparent Market Data</span></h1>
       <p data-i18n="hero_sub">Explore IDX major shareholder ownership data for investors holding more than 1% stake in listed companies on the Indonesia Stock Exchange.</p>
+    </div>
+
+    <div class="home-chart-section">
+      <div class="market-chart-card">
+        <div class="home-chart-header">
+          <span class="home-card-title" data-i18n="home_live_index">Live Index Performance</span>
+          <div class="market-stock-picks" id="homeIndexPicks"></div>
+        </div>
+        <div class="market-chart-body" id="homeIndexChart" style="height:420px">
+          <div class="widget-placeholder"><div class="spinner"></div> Loading chart...</div>
+        </div>
+      </div>
     </div>
 
     <div class="home-stats" id="homeStats"></div>
@@ -91,18 +105,6 @@
       </div>
     </div>
 
-    <div class="home-chart-section">
-      <div class="market-chart-card">
-        <div class="home-chart-header">
-          <span class="home-card-title" data-i18n="home_live_index">Live Index Performance</span>
-          <div class="market-stock-picks" id="homeIndexPicks"></div>
-        </div>
-        <div class="market-chart-body" id="homeIndexChart" style="height:420px">
-          <div class="widget-placeholder"><div class="spinner"></div> Loading chart...</div>
-        </div>
-      </div>
-    </div>
-
     <div class="home-cta-row">
       <button class="btn btn-primary" onclick="navigate('explorer')" data-i18n="cta_explore"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Explore Data</button>
       <button class="btn btn-secondary" onclick="navigate('holdings')" data-i18n="cta_holdings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> All Holdings</button>
@@ -118,8 +120,10 @@
     <div class="explorer-search-section">
       <h2 data-i18n="explorer_title">Explore Shareholder Data</h2>
       <div class="search-wrap">
-        <span class="search-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-        <input type="text" id="search" placeholder="Search investor name..." autocomplete="off" aria-label="Search" aria-expanded="false" aria-controls="autocomplete" role="combobox">
+        <div class="search-field">
+          <span class="search-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input type="text" id="search" placeholder="Search investor name..." autocomplete="off" aria-label="Search" aria-expanded="false" aria-controls="autocomplete" role="combobox">
+        </div>
         <div class="search-tabs" id="searchTabs" role="tablist" aria-label="Search category">
           <button class="search-tab active" data-mode="investor" role="tab" aria-selected="true" data-i18n="tab_investor">Investor</button>
           <button class="search-tab" data-mode="stock" role="tab" aria-selected="false" data-i18n="tab_stock">Stock</button>
@@ -161,7 +165,7 @@
       </div>
       <div class="stats-row" id="stockDetailStats"></div>
       <div class="top-row">
-        <div class="card">
+        <div class="card card--graph">
           <div class="card-title" data-i18n="holder_network">Holder Network</div>
           <div id="stock-graph-container" style="min-height:520px"></div>
           <div class="legend" id="stock-legend"></div>
@@ -204,7 +208,7 @@
       <div class="stats-row" id="statsRow"></div>
 
       <div class="top-row">
-        <div class="card">
+        <div class="card card--graph">
           <div class="card-title" data-i18n="ownership_network">Ownership Network</div>
           <div id="graph-container"></div>
           <div class="legend" id="legend"></div>
@@ -395,7 +399,10 @@
     <!-- Directory View -->
     <div id="intelDirectoryView" role="tabpanel">
       <div class="intel-search-bar">
-        <input type="text" id="intelSearch" placeholder="Search by name, nationality, or domicile..." autocomplete="off" aria-label="Search investors">
+        <div class="search-field">
+          <span class="search-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input type="text" id="intelSearch" placeholder="Search by name, nationality, or domicile..." autocomplete="off" aria-label="Search investors">
+        </div>
       </div>
 
       <div class="intel-tabs" id="intelClassTabs"></div>
@@ -414,7 +421,10 @@
     <!-- Groups View -->
     <div id="intelGroupsView" style="display:none">
       <div class="intel-search-bar">
-        <input type="text" id="intelGroupSearch" placeholder="Search groups by name..." autocomplete="off" aria-label="Search investor groups">
+        <div class="search-field">
+          <span class="search-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+          <input type="text" id="intelGroupSearch" placeholder="Search groups by name..." autocomplete="off" aria-label="Search investor groups">
+        </div>
       </div>
 
       <h3 class="intel-section-title" data-tip="" id="intelGroupsTitle"><span data-i18n="detected_groups">Detected Groups</span> <span class="count-badge" id="intelGroupCount"></span></h3>

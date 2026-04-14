@@ -29,6 +29,26 @@ const TYPE_LABELS = I18N.en.type_labels;
 const fmt = new Intl.NumberFormat('en-US');
 const fmtPct = v => v.toFixed(2) + '%';
 
+/** Darken very light type fills for force-graph nodes only (legends/pie keep TYPE_COLORS). */
+function graphNodeFillForType(tp) {
+  const base = TYPE_COLORS[tp] || TYPE_COLORS[''];
+  const c = d3.color(base);
+  if (!c) return base;
+  const lum = (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b) / 255;
+  if (lum > 0.5) return c.darker(0.75 + (lum - 0.5) * 1.5).formatHex();
+  return base;
+}
+
+/** Subtle ring on light fills so white labels stay readable. */
+function graphNodeStrokeForFill(fillHex) {
+  const c = d3.color(fillHex);
+  if (!c) return null;
+  const lum = (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b) / 255;
+  return lum > 0.48 ? 'rgba(0,0,0,0.42)' : null;
+}
+
+const GRAPH_LINK_STROKE = 'rgba(93, 184, 217, 0.55)';
+
 function debounce(fn, ms = 200) {
   let id;
   return (...args) => { clearTimeout(id); id = setTimeout(() => fn(...args), ms); };
@@ -327,7 +347,7 @@ function renderHomePage() {
     .slice(0, 10);
 
   document.getElementById('homeTopInvestors').innerHTML = topInvestors.map((inv, i) => `
-    <tr tabindex="0" role="link" data-nav="investor" data-name="${esc(inv.name)}" onclick="navigateToInvestor('${esc(inv.name.replace(/'/g, "\\'"))}')">
+    <tr tabindex="0" role="link" data-nav="investor" data-name="${esc(inv.name)}">
       <td class="mini-rank">${i + 1}</td>
       <td class="mini-name"><span class="mini-name-link">${esc(inv.name)}</span></td>
       <td class="num">${inv.stocks}</td>
@@ -341,7 +361,7 @@ function renderHomePage() {
     .slice(0, 10);
 
   document.getElementById('homeTopStocks').innerHTML = topStocks.map((stk, i) => `
-    <tr tabindex="0" role="link" data-nav="stock" data-code="${esc(stk.code)}" onclick="navigateToStock('${esc(stk.code)}')">
+    <tr tabindex="0" role="link" data-nav="stock" data-code="${esc(stk.code)}">
       <td class="mini-rank">${i + 1}</td>
       <td><img class="stock-logo-sm" data-logo-ticker="${esc(stk.code)}" src="${getLogoUrl(stk.code) || ''}" alt="" style="${getLogoUrl(stk.code) ? '' : 'display:none'}"><span class="mini-ticker">${esc(stk.code)}</span></td>
       <td class="mini-name" title="${esc(stk.issuer)}">${esc(stk.issuer)}</td>
@@ -352,6 +372,10 @@ function renderHomePage() {
   initHomeIndexChart();
 
   document.querySelectorAll('.mini-table tr[tabindex]').forEach(tr => {
+    tr.addEventListener('click', () => {
+      if (tr.dataset.nav === 'investor' && tr.dataset.name) navigateToInvestor(tr.dataset.name);
+      else if (tr.dataset.nav === 'stock' && tr.dataset.code) navigateToStock(tr.dataset.code);
+    });
     tr.addEventListener('keydown', e => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -830,17 +854,6 @@ function renderStockGraph(code, rows) {
   const width = container.clientWidth || 700;
   const height = 520;
 
-  const svg = d3.select(container).append('svg')
-    .attr('viewBox', `0 0 ${width} ${height}`)
-    .attr('preserveAspectRatio', 'xMidYMid meet')
-    .style('width', '100%').style('height', '520px').style('display', 'block');
-
-  const defs = svg.append('defs');
-  const glow = defs.append('filter').attr('id', 'sglow');
-  glow.append('feGaussianBlur').attr('stdDeviation', '3').attr('result', 'blur');
-  glow.append('feMerge').selectAll('feMergeNode')
-    .data(['blur', 'SourceGraphic']).join('feMergeNode').attr('in', d => d);
-
   const stockNode = { id: '__stock__', name: code, type: 'stock-center' };
   const holderNodes = rows.map(r => ({
     id: r.investor_name,
@@ -859,67 +872,138 @@ function renderStockGraph(code, rows) {
   const radiusScale = d3.scaleSqrt().domain([0, maxPct]).range([20, 44]);
   const linkScale = d3.scaleLinear().domain([0, maxPct]).range([1.5, 7]);
 
+  const cx = width / 2;
+  const cy = height / 2;
+  stockNode.x = cx;
+  stockNode.y = cy;
+  stockNode.fx = cx;
+  stockNode.fy = cy;
+  const nHold = holderNodes.length;
+  holderNodes.forEach((d, i) => {
+    const ang = (nHold ? i / nHold : 0) * 2 * Math.PI - Math.PI / 2;
+    const rad = Math.min(width, height) * 0.32;
+    d.x = cx + Math.cos(ang) * rad;
+    d.y = cy + Math.sin(ang) * rad;
+  });
+
+  const svg = d3.select(container).append('svg')
+    .attr('viewBox', `0 0 ${width} ${height}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet')
+    .attr('overflow', 'visible')
+    .style('width', '100%').style('height', '520px').style('display', 'block');
+
+  const defs = svg.append('defs');
+  const glow = defs.append('filter').attr('id', 'sglow');
+  glow.append('feGaussianBlur').attr('stdDeviation', '3').attr('result', 'blur');
+  glow.append('feMerge').selectAll('feMergeNode')
+    .data(['blur', 'SourceGraphic']).join('feMergeNode').attr('in', d => d);
+
   const sim = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id(d => d.id).distance(d => 140 + (1 - d.pct / maxPct) * 80))
-    .force('charge', d3.forceManyBody().strength(-350))
-    .force('center', d3.forceCenter(width / 2, height / 2).strength(0.05))
-    .force('x', d3.forceX(width / 2).strength(0.03))
-    .force('y', d3.forceY(height / 2).strength(0.03))
-    .force('collide', d3.forceCollide().radius(d => (d.type === 'stock-center' ? 44 : radiusScale(d.pct)) + 10));
+    .velocityDecay(0.66)
+    .alphaDecay(0.05)
+    .alphaMin(0.001)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(d => 118 + (1 - d.pct / maxPct) * 52).strength(0.92))
+    .force('charge', d3.forceManyBody().strength(-260))
+    .force('center', d3.forceCenter(cx, cy).strength(0.035))
+    .force('x', d3.forceX(cx).strength(0.018))
+    .force('y', d3.forceY(cy).strength(0.018))
+    .force('collide', d3.forceCollide().radius(d => {
+      if (d.type === 'stock-center') return 46;
+      const r = radiusScale(d.pct);
+      return r + 34;
+    }).iterations(2));
 
   const link = svg.append('g').selectAll('line').data(links).join('line')
-    .attr('stroke', 'var(--border)').attr('stroke-width', d => linkScale(d.pct)).attr('stroke-opacity', 0.6);
+    .attr('stroke', GRAPH_LINK_STROKE)
+    .attr('stroke-width', d => linkScale(d.pct))
+    .attr('stroke-opacity', 0.95)
+    .attr('stroke-linecap', 'round')
+    .attr('pointer-events', 'none');
 
+  const graphPad = 48;
+  let draggingHub = false;
+  const svgNode = svg.node();
   const node = svg.append('g').selectAll('g').data(nodes).join('g')
-    .attr('cursor', 'pointer')
+    .attr('cursor', 'grab')
     .call(d3.drag()
-      .on('start', (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-      .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
-      .on('end', (e, d) => { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; sim.alpha(0.3).restart(); })
+      .container(() => svgNode)
+      .filter(event => !event.ctrlKey && !event.button)
+      .on('start', (e, d) => {
+        if (!e.active) sim.alphaTarget(0.35).restart();
+        if (d.type === 'stock-center') draggingHub = true;
+        d.fx = d.x;
+        d.fy = d.y;
+      })
+      .on('drag', (e, d) => {
+        const src = e.sourceEvent || e;
+        const [px, py] = d3.pointer(src, svgNode);
+        d.fx = Math.max(graphPad, Math.min(width - graphPad, px));
+        d.fy = Math.max(graphPad, Math.min(height - graphPad, py));
+      })
+      .on('end', (e, d) => {
+        if (!e.active) sim.alphaTarget(0);
+        if (d.type === 'stock-center') {
+          draggingHub = false;
+          d.fx = cx;
+          d.fy = cy;
+          d.x = cx;
+          d.y = cy;
+          sim.alpha(0.22).restart();
+        } else {
+          d.fx = null;
+          d.fy = null;
+        }
+      })
     );
 
   node.each(function(d) {
     const g = d3.select(this);
     if (d.type === 'stock-center') {
       const cUrl = getLogoUrl(code);
-      g.append('circle').attr('r', 42).attr('fill', cUrl ? 'var(--surface2)' : 'var(--green)').attr('filter', 'url(#sglow)').attr('opacity', 0.95).attr('stroke', 'var(--green)').attr('stroke-width', cUrl ? 2 : 0);
+      g.append('circle').attr('r', 42).attr('fill', cUrl ? 'var(--surface2)' : 'var(--green)').attr('filter', 'url(#sglow)').attr('opacity', 0.95).attr('stroke', 'var(--green)').attr('stroke-width', cUrl ? 2 : 0)
+        .attr('pointer-events', 'all');
       if (cUrl) {
         const clip = defs.append('clipPath').attr('id', 'sclip');
         clip.append('circle').attr('r', 38);
-        g.append('image').attr('href', cUrl).attr('width', 52).attr('height', 52).attr('x', -26).attr('y', -26).attr('clip-path', 'url(#sclip)');
+        g.append('image').attr('href', cUrl).attr('width', 52).attr('height', 52).attr('x', -26).attr('y', -26).attr('clip-path', 'url(#sclip)').attr('pointer-events', 'none');
         g.append('text').attr('text-anchor', 'middle').attr('dy', '3.5em')
-          .attr('fill', 'var(--text-dim)').attr('font-size', '10px').attr('font-weight', '700').text(d.name);
+          .attr('fill', 'var(--chrome-bright)').attr('font-size', '11px').attr('font-weight', '700').attr('pointer-events', 'none').text(d.name);
       } else {
         g.append('text').attr('text-anchor', 'middle').attr('dy', '-0.15em')
-          .attr('fill', '#fff').attr('font-size', '15px').attr('font-weight', '800').text(d.name);
+          .attr('fill', '#fff').attr('font-size', '15px').attr('font-weight', '800').attr('pointer-events', 'none').text(d.name);
         g.append('text').attr('text-anchor', 'middle').attr('dy', '1.2em')
-          .attr('fill', 'rgba(255,255,255,0.7)').attr('font-size', '10px').attr('font-weight', '600').text('STOCK');
+          .attr('fill', 'rgba(255,255,255,0.7)').attr('font-size', '10px').attr('font-weight', '600').attr('pointer-events', 'none').text('STOCK');
       }
     } else {
-      const color = TYPE_COLORS[d.investorType] || TYPE_COLORS[''];
-      g.append('circle').attr('r', radiusScale(d.pct)).attr('fill', color).attr('opacity', 1);
-
-      const words = d.name.split(' ');
-      let lines = [], cur = '';
-      words.forEach(w => {
-        if ((cur + ' ' + w).trim().length > 10 && cur) { lines.push(cur); cur = w; }
-        else { cur = cur ? cur + ' ' + w : w; }
-      });
-      if (cur) lines.push(cur);
-      if (lines.length > 2) lines = [lines[0], lines[1] + '..'];
-      const lineH = 11;
-      const totalH = lines.length * lineH + 12;
-      const startY = -totalH / 2 + lineH / 2;
-      lines.forEach((line, i) => {
-        g.append('text').attr('text-anchor', 'middle').attr('y', startY + i * lineH)
-          .attr('dominant-baseline', 'central').attr('fill', '#fff')
-          .attr('font-size', '9px').attr('font-weight', '700')
-          .attr('stroke', 'rgba(0,0,0,0.3)').attr('stroke-width', '0.4px').text(line);
-      });
-      g.append('text').attr('text-anchor', 'middle').attr('y', startY + lines.length * lineH)
-        .attr('dominant-baseline', 'central').attr('fill', '#fff')
-        .attr('font-size', '10px').attr('font-weight', '700')
-        .attr('stroke', 'rgba(0,0,0,0.3)').attr('stroke-width', '0.4px').text(fmtPct(d.pct));
+      const r = radiusScale(d.pct);
+      const fill = graphNodeFillForType(d.investorType);
+      const ring = graphNodeStrokeForFill(fill);
+      const fo = g.append('foreignObject')
+        .attr('x', -80)
+        .attr('y', r + 6)
+        .attr('width', 160)
+        .attr('height', 140)
+        .attr('pointer-events', 'none')
+        .style('overflow', 'visible');
+      fo.append('xhtml:div')
+        .style('text-align', 'center')
+        .style('font-size', '10px')
+        .style('font-weight', '700')
+        .style('color', '#e8eaed')
+        .style('line-height', '1.3')
+        .style('word-break', 'break-word')
+        .style('max-height', '3.6em')
+        .style('overflow', 'hidden')
+        .style('pointer-events', 'none')
+        .text(d.name);
+      g.append('circle').attr('r', r).attr('fill', fill).attr('opacity', 1)
+        .attr('stroke', ring || 'none').attr('stroke-width', ring ? 1.5 : 0)
+        .attr('pointer-events', 'all');
+      g.append('text').attr('text-anchor', 'middle').attr('dy', '0.35em')
+        .attr('fill', '#fff').attr('font-size', Math.min(14, 9 + r * 0.22) + 'px').attr('font-weight', '800')
+        .attr('stroke', 'rgba(0,0,0,0.35)').attr('stroke-width', '0.5px')
+        .attr('pointer-events', 'none')
+        .text(fmtPct(d.pct));
     }
   });
 
@@ -942,6 +1026,19 @@ function renderStockGraph(code, rows) {
     .on('click', () => { selectStock(code); });
 
   sim.on('tick', () => {
+    nodes.forEach(d => {
+      if (d.type === 'stock-center') {
+        if (!draggingHub) {
+          d.fx = cx;
+          d.fy = cy;
+          d.x = cx;
+          d.y = cy;
+        }
+      } else {
+        d.x = Math.max(graphPad, Math.min(width - graphPad, d.x));
+        d.y = Math.max(graphPad, Math.min(height - graphPad, d.y));
+      }
+    });
     link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
       .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
     node.attr('transform', d => `translate(${d.x},${d.y})`);
@@ -1021,7 +1118,7 @@ const STOCK_DETAIL_COLS = [
   { key: 'investor_name', lk: 'tab_investor', tk: 'investor_name', fmt: v => `<a class="investor-link" href="#">${esc(v)}</a>` },
   { key: 'investor_type', lk: 'col_type', tk: 'investor_type', fmt: v => v ? `<span class="type-badge" data-tip="${TYPE_TIPS_MAP()[v] || ''}" style="background:${TYPE_COLORS[v]}22;color:${TYPE_COLORS[v]}">${v}</span>` : '—' },
   { key: 'local_foreign', lk: 'col_lf', tk: 'local_foreign', fmt: v => v === 'L' ? `<span data-tip="${tt('tip_local')}">${t('local')}</span>` : v === 'F' ? `<span data-tip="${tt('tip_foreign')}">${t('foreign')}</span>` : '—' },
-  { key: 'nationality', lk: 'tab_nationality', tk: 'nationality' },
+  { key: 'nationality', lk: 'col_nationality', tk: 'nationality' },
   { key: 'total_holding_shares', lk: 'col_total_shares', tk: 'total_holding_shares', fmt: v => fmt.format(v), numeric: true },
   { key: 'percentage', lk: 'col_stake_pct', tk: 'percentage', fmt: null, numeric: true }
 ];
@@ -1093,7 +1190,18 @@ function highlightMatch(name, query) {
 }
 
 function esc(s) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Allowlist for dynamic CSS class segments (classification, risk flags, etc.). */
+function safeCssClass(s) {
+  const t = String(s ?? '').replace(/[^a-zA-Z0-9_-]/g, '');
+  return t || 'x';
 }
 
 function setStockLogo(el, code) {
@@ -1143,15 +1251,29 @@ function selectInvestor(name) {
   const profile = intelProfileMap.get(name);
   if (profile) {
     const _ct = CLASSIFICATION_TIPS_MAP(), _cl = CLASS_LABELS_MAP(), _rl = RISK_FLAG_LABELS_MAP(), _rt = RISK_FLAG_TIPS_MAP();
-    badges.innerHTML += `<span class="classification-badge ${profile.classification}" data-tip="${_ct[profile.classification] || ''}">${_cl[profile.classification] || profile.classification.replace('_', ' ')}</span>`;
+    badges.innerHTML += `<span class="classification-badge ${safeCssClass(profile.classification)}" data-tip="${esc(_ct[profile.classification] || '')}">${esc(_cl[profile.classification] || profile.classification.replace('_', ' '))}</span>`;
     if (profile.group_id) {
       const gLabel = getGroupLabel(profile.group_id);
-      if (gLabel) badges.innerHTML += `<span class="group-tag" data-tip="${tt('tip_group_tag_explorer')}" onclick="navigate('intelligence');setTimeout(()=>scrollToGroup('${esc(profile.group_id)}'),200)">${esc(gLabel)}</span>`;
+      if (gLabel) {
+        badges.innerHTML += `<span class="group-tag" data-tip="${esc(tt('tip_group_tag_explorer'))}" data-gid="${esc(profile.group_id)}" role="link" tabindex="0">${esc(gLabel)}</span>`;
+      }
     }
     (profile.risk_flags || []).forEach(f => {
-      badges.innerHTML += `<span class="risk-flag ${f}" data-tip="${_rt[f] || ''}">${_rl[f] || f}</span>`;
+      badges.innerHTML += `<span class="risk-flag ${safeCssClass(f)}" data-tip="${esc(_rt[f] || '')}">${esc(_rl[f] || f)}</span>`;
     });
   }
+  badges.querySelectorAll('.group-tag[data-gid]').forEach(el => {
+    const go = () => {
+      const gid = el.dataset.gid;
+      if (!gid) return;
+      navigate('intelligence');
+      setTimeout(() => scrollToGroup(gid), 200);
+    };
+    el.addEventListener('click', e => { e.preventDefault(); go(); });
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+    });
+  });
 
   hideExplorerStockChart();
   renderStats(rows);
@@ -1200,17 +1322,6 @@ function renderGraph(name, rows) {
   const width = container.clientWidth || 700;
   const height = 520;
 
-  const svg = d3.select(container)
-    .append('svg')
-    .attr('viewBox', `0 0 ${width} ${height}`)
-    .attr('preserveAspectRatio', 'xMidYMid meet');
-
-  const defs = svg.append('defs');
-  const glow = defs.append('filter').attr('id', 'glow');
-  glow.append('feGaussianBlur').attr('stdDeviation', '3').attr('result', 'blur');
-  glow.append('feMerge').selectAll('feMergeNode')
-    .data(['blur', 'SourceGraphic']).join('feMergeNode').attr('in', d => d);
-
   const investorNode = { id: '__investor__', name: name, type: 'investor' };
   const stockNodes = rows.map(r => ({
     id: r.share_code, name: r.share_code, issuer: r.issuer_name,
@@ -1225,73 +1336,141 @@ function renderGraph(name, rows) {
   const radiusScale = d3.scaleSqrt().domain([0, maxPct]).range([22, 48]);
   const linkScale = d3.scaleLinear().domain([0, maxPct]).range([1.5, 7]);
 
+  const cx = width / 2;
+  const cy = height / 2;
+  investorNode.x = cx;
+  investorNode.y = cy;
+  investorNode.fx = cx;
+  investorNode.fy = cy;
+  const nSt = stockNodes.length;
+  stockNodes.forEach((d, i) => {
+    const ang = (nSt ? i / nSt : 0) * 2 * Math.PI - Math.PI / 2;
+    const rad = Math.min(width, height) * 0.32;
+    d.x = cx + Math.cos(ang) * rad;
+    d.y = cy + Math.sin(ang) * rad;
+  });
+
+  const svg = d3.select(container)
+    .append('svg')
+    .attr('viewBox', `0 0 ${width} ${height}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet')
+    .attr('overflow', 'visible');
+
+  const defs = svg.append('defs');
+  const glow = defs.append('filter').attr('id', 'glow');
+  glow.append('feGaussianBlur').attr('stdDeviation', '3').attr('result', 'blur');
+  glow.append('feMerge').selectAll('feMergeNode')
+    .data(['blur', 'SourceGraphic']).join('feMergeNode').attr('in', d => d);
+
   const sim = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id(d => d.id).distance(d => 140 + (1 - d.pct / maxPct) * 80))
-    .force('charge', d3.forceManyBody().strength(-400))
-    .force('center', d3.forceCenter(width / 2, height / 2).strength(0.05))
-    .force('x', d3.forceX(width / 2).strength(0.03))
-    .force('y', d3.forceY(height / 2).strength(0.03))
-    .force('collide', d3.forceCollide().radius(d => (d.type === 'investor' ? 44 : radiusScale(d.pct)) + 10));
+    .velocityDecay(0.66)
+    .alphaDecay(0.05)
+    .alphaMin(0.001)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(d => 118 + (1 - d.pct / maxPct) * 52).strength(0.92))
+    .force('charge', d3.forceManyBody().strength(-260))
+    .force('center', d3.forceCenter(cx, cy).strength(0.035))
+    .force('x', d3.forceX(cx).strength(0.018))
+    .force('y', d3.forceY(cy).strength(0.018))
+    .force('collide', d3.forceCollide().radius(d => {
+      if (d.type === 'investor') return 48;
+      const r = radiusScale(d.pct);
+      return r + 36;
+    }).iterations(2));
 
   const link = svg.append('g')
     .selectAll('line').data(links).join('line')
-    .attr('stroke', 'var(--border)')
+    .attr('stroke', GRAPH_LINK_STROKE)
     .attr('stroke-width', d => linkScale(d.pct))
-    .attr('stroke-opacity', 0.6);
+    .attr('stroke-opacity', 0.95)
+    .attr('stroke-linecap', 'round')
+    .attr('pointer-events', 'none');
 
+  const graphPad = 48;
+  let draggingHub = false;
+  const svgNode = svg.node();
   const node = svg.append('g')
     .selectAll('g').data(nodes).join('g')
-    .attr('cursor', 'pointer')
+    .attr('cursor', 'grab')
     .call(d3.drag()
-      .on('start', (e, d) => { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-      .on('drag', (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .container(() => svgNode)
+      .filter(event => !event.ctrlKey && !event.button)
+      .on('start', (e, d) => {
+        if (!e.active) sim.alphaTarget(0.35).restart();
+        if (d.type === 'investor') draggingHub = true;
+        d.fx = d.x;
+        d.fy = d.y;
+      })
+      .on('drag', (e, d) => {
+        const src = e.sourceEvent || e;
+        const [px, py] = d3.pointer(src, svgNode);
+        d.fx = Math.max(graphPad, Math.min(width - graphPad, px));
+        d.fy = Math.max(graphPad, Math.min(height - graphPad, py));
+      })
       .on('end', (e, d) => {
         if (!e.active) sim.alphaTarget(0);
-        d.fx = null; d.fy = null;
-        sim.alpha(0.3).restart();
+        if (d.type === 'investor') {
+          draggingHub = false;
+          d.fx = cx;
+          d.fy = cy;
+          d.x = cx;
+          d.y = cy;
+          sim.alpha(0.22).restart();
+        } else {
+          d.fx = null;
+          d.fy = null;
+        }
       })
     );
 
   node.each(function(d) {
     const g = d3.select(this);
     if (d.type === 'investor') {
-      g.append('circle').attr('r', 40).attr('fill', 'var(--accent)').attr('filter', 'url(#glow)').attr('opacity', 0.95);
-      const words = d.name.split(' ');
-      let lines = [], cur = '';
-      words.forEach(w => {
-        if ((cur + ' ' + w).trim().length > 12 && cur) { lines.push(cur); cur = w; }
-        else { cur = cur ? cur + ' ' + w : w; }
-      });
-      if (cur) lines.push(cur);
-      if (lines.length > 3) lines = [lines[0], lines[1], lines[2] + '..'];
-      const lineH = 14;
-      const totalH = lines.length * lineH;
-      const startY = -totalH / 2 + lineH / 2 + 1;
-      lines.forEach((line, i) => {
-        g.append('text').attr('text-anchor', 'middle').attr('y', startY + i * lineH)
-          .attr('dominant-baseline', 'central').attr('fill', '#fff')
-          .attr('font-size', '11px').attr('font-weight', '700').text(line);
-      });
+      const fo = g.append('foreignObject')
+        .attr('x', -120)
+        .attr('y', 46)
+        .attr('width', 240)
+        .attr('height', 200)
+        .attr('pointer-events', 'none')
+        .style('overflow', 'visible');
+      fo.append('xhtml:div')
+        .style('text-align', 'center')
+        .style('font-size', '11px')
+        .style('font-weight', '700')
+        .style('color', '#e8f4f8')
+        .style('line-height', '1.35')
+        .style('word-break', 'break-word')
+        .style('max-height', '4.2em')
+        .style('overflow', 'hidden')
+        .style('pointer-events', 'none')
+        .text(d.name);
+      g.append('circle').attr('r', 40).attr('fill', 'var(--accent)').attr('filter', 'url(#glow)').attr('opacity', 0.95)
+        .attr('pointer-events', 'all');
     } else {
       const r = radiusScale(d.pct);
       const nUrl = getLogoUrl(d.id);
-      const color = TYPE_COLORS[d.investorType] || TYPE_COLORS[''];
-      g.append('circle').attr('r', r).attr('fill', nUrl ? 'var(--surface2)' : color).attr('opacity', 1).attr('stroke', nUrl ? color : 'none').attr('stroke-width', nUrl ? 2 : 0);
+      const fill = graphNodeFillForType(d.investorType);
+      const ring = graphNodeStrokeForFill(fill);
       if (nUrl) {
         const clipId = 'ic_' + d.id.replace(/[^a-zA-Z0-9]/g, '');
         const clip = defs.append('clipPath').attr('id', clipId);
         clip.append('circle').attr('r', r - 3);
         const imgS = (r - 3) * 1.6;
-        g.append('image').attr('href', nUrl).attr('width', imgS).attr('height', imgS).attr('x', -imgS / 2).attr('y', -imgS / 2).attr('clip-path', `url(#${clipId})`);
+        g.append('circle').attr('r', r).attr('fill', 'var(--surface2)').attr('opacity', 1)
+          .attr('stroke', fill).attr('stroke-width', 2.5)
+          .attr('pointer-events', 'all');
+        g.append('image').attr('href', nUrl).attr('width', imgS).attr('height', imgS).attr('x', -imgS / 2).attr('y', -imgS / 2).attr('clip-path', `url(#${clipId})`).attr('pointer-events', 'none');
         g.append('text').attr('text-anchor', 'middle').attr('dy', r + 12)
-          .attr('fill', 'var(--text-dim)').attr('font-size', '10px').attr('font-weight', '700').text(fmtPct(d.pct));
+          .attr('fill', 'var(--chrome-bright)').attr('font-size', '10px').attr('font-weight', '700').attr('pointer-events', 'none').text(fmtPct(d.pct));
       } else {
+        g.append('circle').attr('r', r).attr('fill', fill).attr('opacity', 1)
+          .attr('stroke', ring || 'none').attr('stroke-width', ring ? 1.5 : 0)
+          .attr('pointer-events', 'all');
         g.append('text').attr('text-anchor', 'middle').attr('dy', '-0.2em')
           .attr('fill', '#fff').attr('font-size', '13px').attr('font-weight', '800')
-          .attr('stroke', 'rgba(0,0,0,0.3)').attr('stroke-width', '0.5px').text(d.id);
+          .attr('stroke', 'rgba(0,0,0,0.3)').attr('stroke-width', '0.5px').attr('pointer-events', 'none').text(d.id);
         g.append('text').attr('text-anchor', 'middle').attr('dy', '1.1em')
           .attr('fill', '#fff').attr('font-size', '11px').attr('font-weight', '700')
-          .attr('stroke', 'rgba(0,0,0,0.3)').attr('stroke-width', '0.5px').text(fmtPct(d.pct));
+          .attr('stroke', 'rgba(0,0,0,0.3)').attr('stroke-width', '0.5px').attr('pointer-events', 'none').text(fmtPct(d.pct));
       }
     }
   });
@@ -1316,6 +1495,19 @@ function renderGraph(name, rows) {
     .on('click', (e, d) => { selectStock(d.id); });
 
   sim.on('tick', () => {
+    nodes.forEach(d => {
+      if (d.type === 'investor') {
+        if (!draggingHub) {
+          d.fx = cx;
+          d.fy = cy;
+          d.x = cx;
+          d.y = cy;
+        }
+      } else {
+        d.x = Math.max(graphPad, Math.min(width - graphPad, d.x));
+        d.y = Math.max(graphPad, Math.min(height - graphPad, d.y));
+      }
+    });
     link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
       .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
     node.attr('transform', d => `translate(${d.x},${d.y})`);
@@ -1415,6 +1607,7 @@ const TABLE_COLS = [
   { key: 'issuer_name', lk: 'col_issuer', tk: 'issuer_name' },
   { key: 'investor_type', lk: 'col_type', tk: 'investor_type', fmt: v => v ? `<span class="type-badge" data-tip="${TYPE_TIPS_MAP()[v] || ''}" style="background:${TYPE_COLORS[v]}22;color:${TYPE_COLORS[v]}">${v}</span>` : '—' },
   { key: 'local_foreign', lk: 'col_lf', tk: 'local_foreign', fmt: v => v === 'L' ? `<span data-tip="${tt('tip_local')}">${t('local')}</span>` : v === 'F' ? `<span data-tip="${tt('tip_foreign')}">${t('foreign')}</span>` : '—' },
+  { key: 'nationality', lk: 'col_nationality', tk: 'nationality' },
   { key: 'total_holding_shares', lk: 'col_total_shares', tk: 'total_holding_shares', fmt: v => fmt.format(v), numeric: true },
   { key: 'percentage', lk: 'col_stake_pct', tk: 'percentage', fmt: null, numeric: true }
 ];
@@ -1485,7 +1678,7 @@ const ALL_COLS = [
   { key: 'investor_name', lk: 'tab_investor', tk: 'investor_name', fmt: v => `<a class="investor-link" href="#">${esc(v)}</a>` },
   { key: 'investor_type', lk: 'col_type', tk: 'investor_type', fmt: v => v ? `<span class="type-badge" data-tip="${TYPE_TIPS_MAP()[v] || ''}" style="background:${TYPE_COLORS[v]}22;color:${TYPE_COLORS[v]}">${v}</span>` : '—' },
   { key: 'local_foreign', lk: 'col_lf', tk: 'local_foreign', fmt: v => v === 'L' ? `<span data-tip="${tt('tip_local')}">${t('local')}</span>` : v === 'F' ? `<span data-tip="${tt('tip_foreign')}">${t('foreign')}</span>` : '—' },
-  { key: 'nationality', lk: 'tab_nationality', tk: 'nationality' },
+  { key: 'nationality', lk: 'col_nationality', tk: 'nationality' },
   { key: 'total_holding_shares', lk: 'col_total_shares', tk: 'total_holding_shares', fmt: v => fmt.format(v), numeric: true },
   { key: 'percentage', lk: 'col_stake_pct', tk: 'percentage', fmt: null, numeric: true }
 ];
@@ -2034,7 +2227,7 @@ function renderIntelStats() {
     </div>
     <div class="intel-stat-card" data-tip="${tt('tip_intel_nat')}">
       <div class="stat-label">${t('stat_top_nat')}</div>
-      <div class="stat-value" style="font-size:20px;letter-spacing:0">${topNat ? topNat[0] : 'N/A'}</div>
+      <div class="stat-value" style="font-size:20px;letter-spacing:0">${topNat ? esc(topNat[0]) : 'N/A'}</div>
       <div class="stat-sub">${topNat ? fmtEN.format(topNat[1]) + ' ' + t('investors') : ''}</div>
     </div>
   `;
@@ -2087,7 +2280,7 @@ function renderIntelClassTabs() {
   classCounts.all = intelProfiles.length;
   const el = document.getElementById('intelClassTabs');
   el.innerHTML = classes.filter(c => c === 'all' || (classCounts[c] || 0) > 0).map(c =>
-    `<button class="intel-tab${c === intelDirClassFilter ? ' active' : ''}" data-class="${c}" data-tip="${cTips[c] || ''}">${labels[c]} <span style="opacity:0.6;font-weight:400">${classCounts[c] || 0}</span></button>`
+    `<button class="intel-tab${c === intelDirClassFilter ? ' active' : ''}" data-class="${c}" data-tip="${esc(cTips[c] || '')}">${esc(labels[c] || c)} <span style="opacity:0.6;font-weight:400">${classCounts[c] || 0}</span></button>`
   ).join('');
   el.querySelectorAll('.intel-tab').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -2106,7 +2299,7 @@ function renderIntelDirHead() {
     const arrow = intelDirSort.key === col.key ? (intelDirSort.asc ? ' ▲' : ' ▼') : '';
     const styles = `cursor:pointer;white-space:nowrap;${col.numeric ? 'text-align:right;' : ''}`;
     const tipVal = tips[col.tk] || '';
-    return `<th data-col="${col.key}" style="${styles}" data-tip="${tipVal}">${t(col.lk)}${arrow}</th>`;
+    return `<th data-col="${col.key}" style="${styles}" data-tip="${esc(tipVal)}">${t(col.lk)}${arrow}</th>`;
   }).join('') + '</tr>';
 
   thead.querySelectorAll('th').forEach(th => {
@@ -2174,13 +2367,13 @@ function renderIntelDirBody() {
   tbody.innerHTML = slice.map(p => {
     const gLabel = getGroupLabel(p.group_id);
     const groupHtml = gLabel ? `<span class="group-tag" data-tip="${tt('tip_group_tag')}" data-gid="${esc(p.group_id)}">${esc(gLabel)}</span>` : '<span style="color:var(--text-muted)">—</span>';
-    const flags = (p.risk_flags || []).slice(0, 2).map(f => `<span class="risk-flag ${f}" data-tip="${rft[f] || ''}">${rfl[f] || f}</span>`).join('');
+    const flags = (p.risk_flags || []).slice(0, 2).map(f => `<span class="risk-flag ${safeCssClass(f)}" data-tip="${esc(rft[f] || '')}">${esc(rfl[f] || f)}</span>`).join('');
     const lfTip = p.local_foreign === 'L' ? `data-tip="${tt('tip_local')}"` : p.local_foreign === 'F' ? `data-tip="${tt('tip_foreign')}"` : '';
     const lfIcon = p.local_foreign === 'L' ? t('local') : p.local_foreign === 'F' ? t('foreign') : '—';
     const clsLabel = cl[p.classification] || p.classification.replace('_', ' ');
     return `<tr data-investor="${esc(p.name)}">
-      <td><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px" title="${esc(p.name)}">${esc(p.name)}</div>${flags ? '<div style="margin-top:3px">' + flags + '</div>' : ''}</td>
-      <td><span class="classification-badge ${p.classification}" data-tip="${ct[p.classification] || ''}">${clsLabel}</span></td>
+      <td><div class="intel-dir-name" title="${esc(p.name)}">${esc(p.name)}</div>${flags ? '<div style="margin-top:3px">' + flags + '</div>' : ''}</td>
+      <td><span class="classification-badge ${safeCssClass(p.classification)}" data-tip="${esc(ct[p.classification] || '')}">${esc(clsLabel)}</span></td>
       <td style="font-size:12px"><span ${lfTip}>${lfIcon}</span></td>
       <td style="font-size:12px">${esc(p.nationality || '—')}</td>
       <td style="text-align:right;font-weight:600">${p.portfolio_size}</td>
@@ -2207,7 +2400,7 @@ function renderIntelDirBody() {
 function scrollToGroup(gid) {
   document.getElementById('intelViewGrp').click();
   setTimeout(() => {
-    const card = document.querySelector(`.intel-group-card[data-gid="${gid}"]`);
+    const card = document.querySelector(`.intel-group-card[data-gid="${CSS.escape(gid)}"]`);
     if (card) {
       card.scrollIntoView({ behavior: 'smooth', block: 'center' });
       card.style.borderColor = 'var(--accent)';
@@ -2301,14 +2494,14 @@ function renderIntelGroupCards() {
     <div class="intel-group-card" data-gid="${esc(g.id)}">
       <div class="intel-group-card-header">
         <h4>${esc(g.label)}</h4>
-        <span class="confidence ${g.confidence}" data-tip="${cTips[g.confidence] || ''}">${g.confidence}</span>
+        <span class="confidence ${safeCssClass(g.confidence)}" data-tip="${esc(cTips[g.confidence] || '')}">${esc(g.confidence)}</span>
       </div>
       <div class="intel-group-card-stats">
         <span data-tip="${tt('tip_group_members')}"><strong>${g.member_count}</strong> ${t('members')}</span>
         <span data-tip="${tt('tip_group_stocks')}"><strong>${g.total_stocks}</strong> ${t('stocks')}</span>
         <span data-tip="${tt('tip_group_avg')}"><strong>${fmtPct(avgPct)}</strong> ${t('avg')}</span>
       </div>
-      <div class="intel-group-card-method" data-tip="${methodTip}">${methodLabel}</div>
+      <div class="intel-group-card-method" data-tip="${esc(methodTip)}">${esc(methodLabel)}</div>
       <div class="intel-group-card-expand">${t('click_members')}</div>
       <div class="intel-group-detail" id="detail-${esc(g.id)}">
         <div class="intel-group-members">
