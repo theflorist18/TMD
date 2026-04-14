@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+debug-*.log
+.venv/
+venv/
+env/
+
+# GitNexus (local graph index; do not commit)
+.gitnexus/
+
+# Root devDependencies (gitnexus CLI)
+node_modules/
+
+# Vite (web/)
+web/node_modules/
+web/dist/
+
+# Generated datasets — run `python scripts/build_profiles.py` after clone
+output/*
+!output/.gitkeep

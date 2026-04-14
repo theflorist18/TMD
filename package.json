@@ -1,0 +1,15 @@
+{
+  "name": "tmd",
+  "private": true,
+  "description": "Transparent Market Data — tooling + static web. GitNexus is optional dev tooling (see AGENTS.md).",
+  "scripts": {
+    "gitnexus:analyze": "gitnexus analyze --skip-agents-md",
+    "gitnexus:analyze:skills": "gitnexus analyze --skip-agents-md --skills",
+    "gitnexus:setup": "gitnexus setup",
+    "gitnexus:status": "gitnexus status",
+    "gitnexus:mcp": "gitnexus mcp"
+  },
+  "devDependencies": {
+    "gitnexus": "^1.6.1"
+  }
+}
