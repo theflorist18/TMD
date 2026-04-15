@@ -1,3 +1,5 @@
+...only directed, cursor did all the work
+
 # Transparent Market Data (TMD)
 
 Web app and tooling to explore IDX-style major shareholder ownership tables. **Default:** static files only — datasets under `output/`, no server in this repository.
