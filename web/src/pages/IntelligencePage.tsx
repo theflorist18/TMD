@@ -2,26 +2,38 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
-  authorizedFetch,
+  fetchDataset,
   intelGroupCandidatesUrl,
   intelGroupsUrl,
   intelProfilesUrl,
 } from '@/api/client';
-import { formatInt, esc } from '@/lib/format';
+import { formatInt, esc, formatPct } from '@/lib/format';
+import type { IntelGroup } from '@/domain/intelGroups';
+import { getPaginationRange } from '@/lib/pagination';
 import type { IntelProfile } from '@/charts/intelCharts';
 import { renderIntelCharts } from '@/charts/intelCharts';
-import { IconSearch } from '@/components/Icons';
+import { IconSearch, IconSortAsc, IconSortDesc } from '@/components/Icons';
 
-type IntelGroup = {
-  id: string;
-  label: string;
-  member_count: number;
-  total_stocks: number;
-  total_pct_sum: number;
-  confidence: string;
-  detection_method?: string;
-  members: string[];
-};
+const INTEL_DIR_COLS = [
+  { key: 'name', lk: 'tab_investor', tk: 'investor', numeric: false },
+  { key: 'classification', lk: 'col_class', tk: 'classification', numeric: false },
+  { key: 'local_foreign', lk: 'col_lf', tk: 'lf', numeric: false },
+  { key: 'nationality', lk: 'tab_nationality', tk: 'nat', numeric: false },
+  { key: 'portfolio_size', lk: 'col_stocks', tk: 'portfolio_size', numeric: true },
+  { key: 'avg_pct', lk: 'col_avg_pct', tk: 'avg_pct', numeric: true },
+  { key: 'group_id', lk: 'col_group', tk: 'group_id', numeric: false },
+] as const;
+
+function classificationSlug(classification?: string): string {
+  const s = (classification || 'other').trim().toLowerCase().replace(/\s+/g, '_');
+  return s.replace(/[^a-z0-9_]/g, '') || 'other';
+}
+
+function groupLabelFor(groups: IntelGroup[], gid?: string): string {
+  if (!gid) return '';
+  const g = groups.find((x) => x.id === gid);
+  return g?.label ?? gid;
+}
 
 export function IntelligencePage() {
   const { t } = useTranslation();
@@ -32,6 +44,12 @@ export function IntelligencePage() {
   const [q, setQ] = useState('');
   const [gq, setGq] = useState('');
   const [view, setView] = useState<'directory' | 'groups'>('directory');
+  const [dirSort, setDirSort] = useState<{ key: string; asc: boolean }>({
+    key: 'portfolio_size',
+    asc: false,
+  });
+  const [dirPage, setDirPage] = useState(1);
+  const [dirPageSize, setDirPageSize] = useState(25);
 
   const typeLabel = useCallback((code: string) => t(`type_labels.${code}`) || code, [t]);
 
@@ -40,15 +58,15 @@ export function IntelligencePage() {
     (async () => {
       try {
         const [pResp, gResp] = await Promise.all([
-          authorizedFetch(intelProfilesUrl()),
-          authorizedFetch(intelGroupsUrl()),
+          fetchDataset(intelProfilesUrl()),
+          fetchDataset(intelGroupsUrl()),
         ]);
         if (!pResp.ok || !gResp.ok) throw new Error(t('failed_intel'));
         const p = (await pResp.json()) as IntelProfile[];
         let g = (await gResp.json()) as IntelGroup[];
         let fromCandidates = false;
         if (!Array.isArray(g) || g.length === 0) {
-          const cResp = await authorizedFetch(intelGroupCandidatesUrl());
+          const cResp = await fetchDataset(intelGroupCandidatesUrl());
           if (cResp.ok) {
             const cg = (await cResp.json()) as IntelGroup[];
             if (Array.isArray(cg) && cg.length > 0) {
@@ -106,9 +124,46 @@ export function IntelligencePage() {
         (p.nationality ?? '').toLowerCase().includes(qq) ||
         String(p.domicile ?? '')
           .toLowerCase()
-          .includes(qq)
+          .includes(qq) ||
+        (p.group_id ?? '').toLowerCase().includes(qq)
     );
   }, [profiles, q]);
+
+  const dirSorted = useMemo(() => {
+    const col = INTEL_DIR_COLS.find((c) => c.key === dirSort.key) ?? INTEL_DIR_COLS[4];
+    const { key, asc } = dirSort;
+    return [...filteredProfiles].sort((a, b) => {
+      let va: string | number = (a as Record<string, string | number | undefined>)[key] as never;
+      let vb: string | number = (b as Record<string, string | number | undefined>)[key] as never;
+      if (va == null || va === '') va = col.numeric ? -Infinity : 'zzz';
+      if (vb == null || vb === '') vb = col.numeric ? -Infinity : 'zzz';
+      const cmp = col.numeric
+        ? (Number(va) || 0) - (Number(vb) || 0)
+        : String(va).localeCompare(String(vb));
+      return asc ? cmp : -cmp;
+    });
+  }, [filteredProfiles, dirSort]);
+
+  const dirSlice = useMemo(() => {
+    const totalPages = Math.max(1, Math.ceil(dirSorted.length / dirPageSize));
+    const p = Math.min(dirPage, totalPages);
+    const start = (p - 1) * dirPageSize;
+    return {
+      page: p,
+      totalPages,
+      start,
+      rows: dirSorted.slice(start, start + dirPageSize),
+      total: dirSorted.length,
+    };
+  }, [dirSorted, dirPage, dirPageSize]);
+
+  useEffect(() => {
+    setDirPage(1);
+  }, [q]);
+
+  useEffect(() => {
+    setDirPage(1);
+  }, [dirSort]);
 
   const filteredGroups = useMemo(() => {
     if (!groups) return [];
@@ -234,46 +289,157 @@ export function IntelligencePage() {
               </div>
             </div>
             <div className="table-card">
-              <div className="table-scroll" style={{ maxHeight: 560 }}>
+              <div className="table-scroll">
                 <table>
-                  <thead>
+                  <thead id="intelDirectoryHead">
                     <tr>
-                      <th>{t('tab_investor')}</th>
-                      <th>{t('col_class')}</th>
-                      <th>{t('col_lf')}</th>
-                      <th>{t('tab_nationality')}</th>
-                      <th className="num">{t('col_stocks')}</th>
-                      <th className="num">{t('col_avg_pct')}</th>
+                      {INTEL_DIR_COLS.map((col) => {
+                        const tip = t(`col_tips.${col.tk}`, { defaultValue: '' });
+                        return (
+                          <th
+                            key={col.key}
+                            data-col={col.key}
+                            data-tip={tip || undefined}
+                            className={col.numeric ? 'num' : undefined}
+                            style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+                            onClick={() => {
+                              setDirSort((prev) =>
+                                prev.key === col.key
+                                  ? { key: col.key, asc: !prev.asc }
+                                  : { key: col.key, asc: col.numeric ? false : true }
+                              );
+                            }}
+                          >
+                            <span className="th-inner">
+                              <span className="th-label">{t(col.lk)}</span>
+                              {dirSort.key === col.key ? (
+                                <span className="th-sort" aria-hidden>
+                                  {dirSort.asc ? <IconSortAsc /> : <IconSortDesc />}
+                                </span>
+                              ) : null}
+                            </span>
+                          </th>
+                        );
+                      })}
                     </tr>
                   </thead>
-                  <tbody>
-                    {filteredProfiles.slice(0, 200).map((p) => (
-                      <tr key={p.name}>
-                        <td>
-                          <Link
-                            className="table-text-link"
-                            to={`/explorer?investor=${encodeURIComponent(p.name)}`}
-                          >
-                            {esc(p.name)}
-                          </Link>
-                        </td>
-                        <td>{esc(p.classification ?? '')}</td>
-                        <td>
-                          {p.local_foreign === 'L'
-                            ? t('local')
-                            : p.local_foreign === 'F'
-                              ? t('foreign')
-                              : '—'}
-                        </td>
-                        <td>{esc(p.nationality ?? '—')}</td>
-                        <td className="num">{formatInt(p.portfolio_size ?? 0)}</td>
-                        <td className="num">
-                          {typeof p.avg_pct === 'number' ? `${p.avg_pct.toFixed(2)}%` : '—'}
+                  <tbody id="intelDirectoryBody">
+                    {dirSlice.total === 0 ? (
+                      <tr>
+                        <td colSpan={INTEL_DIR_COLS.length} style={{ textAlign: 'center', padding: 40 }}>
+                          {t('no_investors_match')}
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      dirSlice.rows.map((p) => {
+                        const slug = classificationSlug(p.classification);
+                        const clsTip = t(`class_tips.${slug}`, { defaultValue: '' });
+                        const clsTranslated = t(`class_labels.${slug}`, { defaultValue: '' });
+                        const clsLabel =
+                          clsTranslated ||
+                          esc((p.classification || '').replace(/_/g, ' ') || '—');
+                        const gLabel = groupLabelFor(groups, p.group_id);
+                        return (
+                          <tr key={p.name}>
+                            <td>
+                              <Link
+                                className="table-text-link"
+                                to={`/explorer?investor=${encodeURIComponent(p.name)}`}
+                              >
+                                {esc(p.name)}
+                              </Link>
+                            </td>
+                            <td>
+                              <span
+                                className={`classification-badge ${slug}`}
+                                data-tip={clsTip || undefined}
+                              >
+                                {clsLabel}
+                              </span>
+                            </td>
+                            <td style={{ fontSize: 12 }}>
+                              {p.local_foreign === 'L' ? (
+                                <span data-tip={t('tip_local')}>{t('local')}</span>
+                              ) : p.local_foreign === 'F' ? (
+                                <span data-tip={t('tip_foreign')}>{t('foreign')}</span>
+                              ) : (
+                                '—'
+                              )}
+                            </td>
+                            <td style={{ fontSize: 12 }}>{esc(p.nationality ?? '—')}</td>
+                            <td className="num">{formatInt(p.portfolio_size ?? 0)}</td>
+                            <td className="num">{formatPct(typeof p.avg_pct === 'number' ? p.avg_pct : NaN)}</td>
+                            <td style={{ whiteSpace: 'normal', minWidth: 140 }} title={gLabel}>
+                              {gLabel ? (
+                                <span className="group-tag" data-tip={t('tip_group_tag')}>
+                                  {esc(gLabel)}
+                                </span>
+                              ) : (
+                                <span style={{ color: 'var(--text-muted)' }}>—</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
                   </tbody>
                 </table>
+              </div>
+              <div className="pagination" id="intelPagination">
+                <span className="page-info">
+                  {dirSlice.total === 0
+                    ? ''
+                    : `${t('showing')} ${formatInt(dirSlice.start + 1)}–${formatInt(dirSlice.start + dirSlice.rows.length)} ${t('of')} ${formatInt(dirSlice.total)}`}
+                </span>
+                <div className="page-size-wrap">
+                  <label>{t('rows_label')}</label>
+                  <select
+                    aria-label="Rows per page"
+                    value={dirPageSize}
+                    onChange={(e) => {
+                      setDirPageSize(Number(e.target.value));
+                      setDirPage(1);
+                    }}
+                  >
+                    {[10, 25, 50, 100].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="page-buttons">
+                  <button
+                    type="button"
+                    disabled={dirSlice.page <= 1}
+                    onClick={() => setDirPage(dirSlice.page - 1)}
+                  >
+                    « {t('prev')}
+                  </button>
+                  {getPaginationRange(dirSlice.page, dirSlice.totalPages).map((pg, i) =>
+                    pg === '...' ? (
+                      <span key={`e${i}`} className="page-ellipsis">
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={pg}
+                        type="button"
+                        className={pg === dirSlice.page ? 'active' : ''}
+                        onClick={() => setDirPage(pg as number)}
+                      >
+                        {pg}
+                      </button>
+                    )
+                  )}
+                  <button
+                    type="button"
+                    disabled={dirSlice.page >= dirSlice.totalPages}
+                    onClick={() => setDirPage(dirSlice.page + 1)}
+                  >
+                    {t('next')} »
+                  </button>
+                </div>
               </div>
             </div>
           </>

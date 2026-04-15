@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:pages": "vite build && node scripts/postbuild-github-pages.mjs",
+    "verify:pages-dist": "node scripts/verify-pages-dist.mjs",
     "preview": "vite preview"
   },
   "devDependencies": {

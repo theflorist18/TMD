@@ -11,6 +11,7 @@ export type IntelProfile = {
   classification?: string;
   avg_pct?: number;
   group_id?: string;
+  risk_flags?: string[];
 };
 
 export function renderIntelCharts(

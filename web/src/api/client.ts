@@ -33,6 +33,20 @@ export function devSkipAuth(): boolean {
   return import.meta.env.DEV && import.meta.env.VITE_DEV_SKIP_AUTH === '1';
 }
 
+/**
+ * When `true`, the app requires a subscriber login (JWT) before routes load.
+ * When `false` (default), the UI is open and loads CSV/JSON from `output/` like a static site.
+ * Set `VITE_ACCESS_GATE=1` only for gated / API-backed deployments.
+ */
+export function accessGateEnabled(): boolean {
+  return import.meta.env.VITE_ACCESS_GATE === '1';
+}
+
+/** When false, dataset URLs never point at the API (GitHub Pages / static hosting). */
+function useApiDatasetUrls(): boolean {
+  return accessGateEnabled() && Boolean(getStoredAccessToken());
+}
+
 type Json = Record<string, unknown>;
 
 async function tryRefresh(): Promise<string | null> {
@@ -75,6 +89,16 @@ export async function authorizedFetch(
     }
   }
   return res;
+}
+
+function datasetUrlNeedsBearer(url: string): boolean {
+  return /\/api\/v1\/datasets\//.test(url);
+}
+
+/** Fetch CSV/JSON: plain `fetch` for static `output/`; Bearer only for gated API dataset URLs. */
+export async function fetchDataset(url: string, init: RequestInit = {}): Promise<Response> {
+  if (datasetUrlNeedsBearer(url)) return authorizedFetch(url, init);
+  return fetch(url, init);
 }
 
 /** Fetch JSON from API with Bearer; refreshes once on 401. */
@@ -140,48 +164,49 @@ export async function loginWithSubscriberToken(token: string): Promise<void> {
   persistTokens(data.access, data.refresh);
 }
 
+/**
+ * Base URL for the `output/` folder (CSV/JSON). Uses Vite `BASE_URL` + `output/` so GitHub
+ * project pages (`https://user.github.io/RepoName/`) resolve to `.../RepoName/output/`.
+ * Override with `VITE_OUTPUT_BASE_URL` (absolute or same-origin path, no trailing slash required).
+ */
 export function outputBaseHref(): string {
-  return new URL('../../output/', window.location.href).href;
+  const custom = (import.meta.env.VITE_OUTPUT_BASE_URL as string | undefined)?.trim();
+  if (custom) {
+    const n = custom.replace(/\/$/, '');
+    return `${n}/`;
+  }
+  const rawBase = import.meta.env.BASE_URL ?? '/';
+  const baseForResolve = rawBase === './' ? '/' : rawBase;
+  const normalized = baseForResolve.endsWith('/') ? baseForResolve : `${baseForResolve}/`;
+  return new URL('output/', new URL(normalized, window.location.href)).href;
 }
 
-/** CSV URL: API when JWT present; local output/ for dev skip or legacy. */
+/** CSV URL: API only when access gate is on and a JWT exists; otherwise always static `output/`. */
 export function holdersCsvUrl(): string {
-  if (devSkipAuth()) {
+  if (devSkipAuth() || !useApiDatasetUrls()) {
     return new URL('one_percent_holders.csv', outputBaseHref()).href;
   }
-  if (getStoredAccessToken()) {
-    return apiUrl('/api/v1/datasets/one_percent_holders.csv/');
-  }
-  return new URL('one_percent_holders.csv', outputBaseHref()).href;
+  return apiUrl('/api/v1/datasets/one_percent_holders.csv/');
 }
 
 export function intelProfilesUrl(): string {
-  if (devSkipAuth()) {
+  if (devSkipAuth() || !useApiDatasetUrls()) {
     return new URL('investor_profiles.json', outputBaseHref()).href;
   }
-  if (getStoredAccessToken()) {
-    return apiUrl('/api/v1/datasets/investor_profiles.json/');
-  }
-  return new URL('investor_profiles.json', outputBaseHref()).href;
+  return apiUrl('/api/v1/datasets/investor_profiles.json/');
 }
 
 export function intelGroupsUrl(): string {
-  if (devSkipAuth()) {
+  if (devSkipAuth() || !useApiDatasetUrls()) {
     return new URL('investor_groups.json', outputBaseHref()).href;
   }
-  if (getStoredAccessToken()) {
-    return apiUrl('/api/v1/datasets/investor_groups.json/');
-  }
-  return new URL('investor_groups.json', outputBaseHref()).href;
+  return apiUrl('/api/v1/datasets/investor_groups.json/');
 }
 
 /** Heuristic group clusters (used when verified ``investor_groups.json`` is empty). */
 export function intelGroupCandidatesUrl(): string {
-  if (devSkipAuth()) {
+  if (devSkipAuth() || !useApiDatasetUrls()) {
     return new URL('investor_group_candidates.json', outputBaseHref()).href;
   }
-  if (getStoredAccessToken()) {
-    return apiUrl('/api/v1/datasets/investor_group_candidates.json/');
-  }
-  return new URL('investor_group_candidates.json', outputBaseHref()).href;
+  return apiUrl('/api/v1/datasets/investor_group_candidates.json/');
 }

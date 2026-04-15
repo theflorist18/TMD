@@ -1,25 +1,40 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { buildInvestorMap, buildStockMap, type HolderRow } from '@/domain/holders';
+import type { IntelGroup } from '@/domain/intelGroups';
 import { useHolders } from '@/context/HoldersDatasetContext';
 import { formatInt, esc, formatPct } from '@/lib/format';
 import { getPaginationRange } from '@/lib/pagination';
-import { renderInvestorNetwork, renderStockNetwork } from '@/charts/forceNetwork';
-import { renderInvestorPie, renderStockPie } from '@/charts/pieDonut';
+import {
+  fetchDataset,
+  intelGroupCandidatesUrl,
+  intelGroupsUrl,
+} from '@/api/client';
+import { renderExplorerBrowseGraph } from '@/charts/explorerBrowseGraph';
+import { renderGroupNetwork, renderInvestorNetwork, renderStockNetwork } from '@/charts/forceNetwork';
+import { renderGroupPie, renderInvestorPie, renderStockPie } from '@/charts/pieDonut';
 import { injectAdvancedChart } from '@/lib/tradingview';
 import { IconSearch, IconSortAsc, IconSortDesc } from '@/components/Icons';
 import { TYPE_COLORS } from '@/charts/d3common';
 
 const BROWSE_PAGE_SIZE = 15;
 
-type SearchMode = 'investor' | 'stock' | 'nationality' | 'domicile';
+type SearchMode = 'investor' | 'stock' | 'nationality' | 'domicile' | 'group';
+
+const explorerNetTitleKey: Record<SearchMode, string> = {
+  investor: 'explorer_net_investor_title',
+  stock: 'explorer_net_stock_title',
+  nationality: 'explorer_net_nationality_title',
+  domicile: 'explorer_net_domicile_title',
+  group: 'explorer_net_group_title',
+};
 
 export function ExplorerPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [sp, setSp] = useSearchParams();
-  const { state } = useHolders();
+  const { state, reload } = useHolders();
 
   const [searchMode, setSearchMode] = useState<SearchMode>('investor');
   const [q, setQ] = useState('');
@@ -31,27 +46,119 @@ export function ExplorerPage() {
 
   const [selectedInvestor, setSelectedInvestor] = useState<string | null>(null);
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [groups, setGroups] = useState<IntelGroup[] | null>(null);
+
+  /** Graph focus → filter rows in the detail table below (same behavior as browse overview graph). */
+  const [detailStockHolderKey, setDetailStockHolderKey] = useState<string | null>(null);
+  const [detailInvestorStockKey, setDetailInvestorStockKey] = useState<string | null>(null);
+  const [detailGroupTableFilter, setDetailGroupTableFilter] = useState<{
+    memberName?: string;
+    shareCode?: string;
+  } | null>(null);
 
   const graphInvRef = useRef<HTMLDivElement>(null);
   const pieInvRef = useRef<HTMLDivElement>(null);
   const graphStRef = useRef<HTMLDivElement>(null);
   const pieStRef = useRef<HTMLDivElement>(null);
   const chartStRef = useRef<HTMLDivElement>(null);
+  const graphGrpRef = useRef<HTMLDivElement>(null);
+  const pieGrpRef = useRef<HTMLDivElement>(null);
+  const groupLegendRef = useRef<HTMLDivElement>(null);
+  const browseOverviewRef = useRef<HTMLDivElement>(null);
+  const stopBrowseOverview = useRef<(() => void) | null>(null);
   const stopSim = useRef<(() => void) | null>(null);
 
   const typeLabel = useCallback((tp: string) => t(`type_labels.${tp}`) || tp, [t]);
 
+  const onBrowseOverviewStock = useCallback((code: string) => {
+    setSp(new URLSearchParams({ stock: code }));
+    setSelectedStock(code);
+    setSelectedInvestor(null);
+    setSelectedGroupId(null);
+  }, [setSp]);
+
+  const onBrowseOverviewInvestor = useCallback(
+    (name: string) => {
+      setSp(new URLSearchParams({ investor: name }));
+      setSelectedInvestor(name);
+      setSelectedStock(null);
+      setSelectedGroupId(null);
+    },
+    [setSp]
+  );
+
+  const onBrowseOverviewGroup = useCallback(
+    (id: string) => {
+      setSp(new URLSearchParams({ group: id }));
+      setSelectedGroupId(id);
+      setSelectedInvestor(null);
+      setSelectedStock(null);
+    },
+    [setSp]
+  );
+
   useEffect(() => {
     const inv = sp.get('investor');
     const stk = sp.get('stock');
+    const grp = sp.get('group');
     if (inv) {
       setSelectedInvestor(inv);
       setSelectedStock(null);
+      setSelectedGroupId(null);
     } else if (stk) {
       setSelectedStock(stk);
       setSelectedInvestor(null);
+      setSelectedGroupId(null);
+    } else if (grp) {
+      setSelectedGroupId(grp);
+      setSelectedInvestor(null);
+      setSelectedStock(null);
+    } else {
+      setSelectedInvestor(null);
+      setSelectedStock(null);
+      setSelectedGroupId(null);
     }
   }, [sp]);
+
+  useEffect(() => {
+    setDetailStockHolderKey(null);
+  }, [selectedStock]);
+
+  useEffect(() => {
+    setDetailInvestorStockKey(null);
+  }, [selectedInvestor]);
+
+  useEffect(() => {
+    setDetailGroupTableFilter(null);
+  }, [selectedGroupId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const gResp = await fetchDataset(intelGroupsUrl());
+        let g: IntelGroup[] = [];
+        if (gResp.ok) {
+          const parsed = (await gResp.json()) as IntelGroup[];
+          if (Array.isArray(parsed)) g = parsed;
+        }
+        if ((!g.length || !Array.isArray(g)) && !cancelled) {
+          const cResp = await fetchDataset(intelGroupCandidatesUrl());
+          if (cResp.ok) {
+            const cg = (await cResp.json()) as IntelGroup[];
+            if (Array.isArray(cg) && cg.length > 0) g = cg;
+          }
+        }
+        if (!cancelled) setGroups(Array.isArray(g) ? g : []);
+      } catch {
+        if (!cancelled) setGroups([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const rows = state.status === 'ready' ? state.rows : [];
   const invMap = useMemo(() => buildInvestorMap(rows), [rows]);
@@ -60,10 +167,46 @@ export function ExplorerPage() {
   const investorRows = selectedInvestor ? invMap.get(selectedInvestor) ?? [] : [];
   const stockRows = selectedStock ? stockMap.get(selectedStock)?.rows ?? [] : [];
 
+  const selectedGroupMeta = useMemo(() => {
+    if (!selectedGroupId || !groups?.length) return null;
+    return groups.find((g) => g.id === selectedGroupId) ?? null;
+  }, [groups, selectedGroupId]);
+
+  const groupRows = useMemo(() => {
+    if (!selectedGroupMeta) return [];
+    const memberSet = new Set(selectedGroupMeta.members);
+    return rows.filter((r) => memberSet.has(r.investor_name));
+  }, [rows, selectedGroupMeta]);
+
+  const stockTableRows = useMemo(() => {
+    if (!detailStockHolderKey) return stockRows;
+    return stockRows.filter((r) => r.investor_name === detailStockHolderKey);
+  }, [stockRows, detailStockHolderKey]);
+
+  const investorTableRows = useMemo(() => {
+    if (!detailInvestorStockKey) return investorRows;
+    return investorRows.filter((r) => r.share_code === detailInvestorStockKey);
+  }, [investorRows, detailInvestorStockKey]);
+
+  const groupTableRows = useMemo(() => {
+    if (!detailGroupTableFilter) return groupRows;
+    return groupRows.filter((r) => {
+      if (detailGroupTableFilter.memberName && r.investor_name !== detailGroupTableFilter.memberName) {
+        return false;
+      }
+      if (detailGroupTableFilter.shareCode && r.share_code !== detailGroupTableFilter.shareCode) {
+        return false;
+      }
+      return true;
+    });
+  }, [groupRows, detailGroupTableFilter]);
+
+  /** Single owner: the stock and investor layout effects previously disposed each other's sim on every paint. */
   useLayoutEffect(() => {
     stopSim.current?.();
     stopSim.current = null;
     if (state.status !== 'ready') return;
+
     if (selectedInvestor && graphInvRef.current && pieInvRef.current) {
       stopSim.current = renderInvestorNetwork(
         graphInvRef.current,
@@ -72,83 +215,235 @@ export function ExplorerPage() {
         {
           typeLabel,
           t,
-          onStockClick: (code) => {
-            setSp(new URLSearchParams({ stock: code }));
-            setSelectedStock(code);
-            setSelectedInvestor(null);
-          },
+          onStockClick: onBrowseOverviewStock,
+          onInvestorHubClick: onBrowseOverviewInvestor,
+          onTableFocusChange: setDetailInvestorStockKey,
         }
       );
       renderInvestorPie(pieInvRef.current, investorRows, {
         t,
-        onStockClick: (code) => {
-          setSp(new URLSearchParams({ stock: code }));
-          setSelectedStock(code);
-          setSelectedInvestor(null);
-        },
+        onStockClick: onBrowseOverviewStock,
       });
-    }
-    return () => {
-      stopSim.current?.();
-      stopSim.current = null;
-    };
-  }, [selectedInvestor, state.status, investorRows, typeLabel, t, setSp]);
-
-  useLayoutEffect(() => {
-    stopSim.current?.();
-    stopSim.current = null;
-    if (state.status !== 'ready') return;
-    if (selectedStock && graphStRef.current && pieStRef.current && chartStRef.current) {
+    } else if (selectedStock && graphStRef.current && pieStRef.current && chartStRef.current) {
       stopSim.current = renderStockNetwork(graphStRef.current, stockRows, selectedStock, {
+        typeLabel,
+        t,
+        onInvestorClick: onBrowseOverviewInvestor,
+        onStockClick: onBrowseOverviewStock,
+        onTableFocusChange: setDetailStockHolderKey,
+      });
+      renderStockPie(pieStRef.current, stockRows, {
+        t,
+        onInvestorClick: onBrowseOverviewInvestor,
+      });
+      injectAdvancedChart(chartStRef.current, `IDX:${selectedStock}`, 420);
+    } else if (
+      selectedGroupId &&
+      selectedGroupMeta &&
+      graphGrpRef.current &&
+      pieGrpRef.current
+    ) {
+      stopSim.current = renderGroupNetwork(graphGrpRef.current, {
+        groupLabel: selectedGroupMeta.label,
+        members: selectedGroupMeta.members,
+        groupRows,
+        allRows: rows,
         typeLabel,
         t,
         onInvestorClick: (name) => {
           setSp(new URLSearchParams({ investor: name }));
           setSelectedInvestor(name);
           setSelectedStock(null);
+          setSelectedGroupId(null);
         },
+        onStockClick: (code) => {
+          setSp(new URLSearchParams({ stock: code }));
+          setSelectedStock(code);
+          setSelectedInvestor(null);
+          setSelectedGroupId(null);
+        },
+        onGroupHubClick: () => {
+          if (selectedGroupId) onBrowseOverviewGroup(selectedGroupId);
+        },
+        onTableFocusChange: setDetailGroupTableFilter,
       });
-      renderStockPie(pieStRef.current, stockRows, {
+      renderGroupPie(pieGrpRef.current, groupRows, {
         t,
-        onInvestorClick: (name) => {
-          setSp(new URLSearchParams({ investor: name }));
-          setSelectedInvestor(name);
-          setSelectedStock(null);
+        onStockClick: (code) => {
+          setSp(new URLSearchParams({ stock: code }));
+          setSelectedStock(code);
+          setSelectedInvestor(null);
+          setSelectedGroupId(null);
         },
       });
-      injectAdvancedChart(chartStRef.current, `IDX:${selectedStock}`, 420);
     }
+
     return () => {
       stopSim.current?.();
       stopSim.current = null;
     };
-  }, [selectedStock, state.status, stockRows, typeLabel, t, setSp]);
+  }, [
+    selectedInvestor,
+    selectedStock,
+    selectedGroupId,
+    selectedGroupMeta,
+    groupRows,
+    state.status,
+    investorRows,
+    stockRows,
+    rows,
+    typeLabel,
+    t,
+    setSp,
+    onBrowseOverviewStock,
+    onBrowseOverviewInvestor,
+    onBrowseOverviewGroup,
+  ]);
+
+  useLayoutEffect(() => {
+    stopBrowseOverview.current?.();
+    stopBrowseOverview.current = null;
+    if (state.status !== 'ready') return;
+    if (selectedInvestor || selectedStock || selectedGroupId) return;
+    const el = browseOverviewRef.current;
+    if (!el) return;
+    stopBrowseOverview.current = renderExplorerBrowseGraph(searchMode, el, {
+      rows,
+      invMap,
+      stockMap,
+      groups,
+      t,
+      onInvestorClick: onBrowseOverviewInvestor,
+      onStockClick: onBrowseOverviewStock,
+      onGroupClick: onBrowseOverviewGroup,
+    });
+    return () => {
+      stopBrowseOverview.current?.();
+      stopBrowseOverview.current = null;
+    };
+  }, [
+    state.status,
+    rows,
+    invMap,
+    stockMap,
+    groups,
+    searchMode,
+    selectedInvestor,
+    selectedStock,
+    selectedGroupId,
+    t,
+    onBrowseOverviewStock,
+    onBrowseOverviewInvestor,
+    onBrowseOverviewGroup,
+  ]);
+
+  useLayoutEffect(() => {
+    const leg = groupLegendRef.current;
+    if (!leg) return;
+    if (!selectedGroupId || !selectedGroupMeta) {
+      leg.innerHTML = '';
+      return;
+    }
+    leg.innerHTML = `<div class="network-legend"><strong>${esc(t('group_net_legend_title'))}</strong>
+<div class="network-legend-line"><span class="swatch hub" aria-hidden="true"></span><span>${esc(t('group_net_legend_hub'))}</span></div>
+<div class="network-legend-line"><span class="swatch member" aria-hidden="true"></span><span>${esc(t('group_net_legend_member'))}</span></div>
+<div class="network-legend-line"><span class="swatch stock" aria-hidden="true"></span><span>${esc(t('group_net_legend_stock'))}</span></div>
+<div class="network-legend-line"><span style="flex-shrink:0;width:12px"></span><span>${esc(t('group_net_legend_links'))}</span></div></div>`;
+    return () => {
+      leg.innerHTML = '';
+    };
+  }, [selectedGroupId, selectedGroupMeta, t]);
 
   const browseData = useMemo(() => {
     if (state.status !== 'ready') return [];
-    if (searchMode === 'investor') {
-      return [...invMap.entries()].map(([name, rws]) => ({
-        key: name,
-        name,
-        stocks: rws.length,
-        totalShares: rws.reduce((s, r) => s + r.total_holding_shares, 0),
-        type: [...new Set(rws.map((r) => r.investor_type).filter(Boolean))].join(', '),
-        localForeign: [
-          ...new Set(rws.map((r) => r.local_foreign).filter(Boolean)),
-        ]
-          .map((v) => (v === 'L' ? 'Local' : 'Foreign'))
-          .join(', '),
+    if (searchMode === 'group') {
+      if (!groups?.length) return [];
+      return groups.map((g) => ({
+        key: g.id,
+        label: g.label,
+        member_count: g.member_count,
+        total_stocks: g.total_stocks,
+        confidence: g.confidence ?? '—',
       }));
     }
+    if (searchMode === 'investor') {
+      return [...invMap.entries()].map(([name, rws]) => {
+        const sortedPct = [...rws].sort((a, b) => b.percentage - a.percentage);
+        const top = sortedPct[0];
+        const topLines = sortedPct.slice(0, 4).map((r) => `${r.share_code}: ${formatPct(r.percentage)}`);
+        let otherBlock = '';
+        if (top) {
+          const others =
+            stockMap
+              .get(top.share_code)
+              ?.rows.filter((r) => r.investor_name !== name)
+              .sort((a, b) => b.percentage - a.percentage)
+              .slice(0, 5) ?? [];
+          if (others.length) {
+            otherBlock = `\n${t('browse_tt_other_holders')}\n${others
+              .map((o) => {
+                const nm =
+                  o.investor_name.length > 46 ? `${o.investor_name.slice(0, 44)}…` : o.investor_name;
+                return `${nm}: ${formatPct(o.percentage)}`;
+              })
+              .join('\n')}`;
+          }
+        }
+        const totalShares = rws.reduce((s, r) => s + r.total_holding_shares, 0);
+        const browseRowHint = [
+          name,
+          `${t('col_stocks')}: ${rws.length}`,
+          `${t('col_total_shares')}: ${formatInt(totalShares)}`,
+          top ? `${t('browse_tt_largest')}: ${top.share_code} (${formatPct(top.percentage)})` : '',
+          topLines.length ? `${t('browse_tt_top_positions')}:\n${topLines.join('\n')}` : '',
+          otherBlock,
+        ]
+          .filter(Boolean)
+          .join('\n');
+        return {
+          key: name,
+          name,
+          stocks: rws.length,
+          totalShares,
+          type: [...new Set(rws.map((r) => r.investor_type).filter(Boolean))].join(', '),
+          localForeign: [
+            ...new Set(rws.map((r) => r.local_foreign).filter(Boolean)),
+          ]
+            .map((v) => (v === 'L' ? 'Local' : 'Foreign'))
+            .join(', '),
+          browseRowHint,
+        };
+      });
+    }
     if (searchMode === 'stock') {
-      return [...stockMap.entries()].map(([code, s]) => ({
-        key: code,
-        code,
-        issuer: s.issuer,
-        holders: s.rows.length,
-        totalShares: s.rows.reduce((sum, r) => sum + r.total_holding_shares, 0),
-        topHolder: s.rows.reduce((a, b) => (a.percentage > b.percentage ? a : b)).investor_name,
-      }));
+      return [...stockMap.entries()].map(([code, s]) => {
+        const sorted = [...s.rows].sort((a, b) => b.percentage - a.percentage);
+        const th = sorted[0];
+        const topLines = sorted.slice(0, 6).map((r) => {
+          const nm =
+            r.investor_name.length > 42 ? `${r.investor_name.slice(0, 40)}…` : r.investor_name;
+          return `${nm}: ${formatPct(r.percentage)}`;
+        });
+        const totalShares = s.rows.reduce((sum, r) => sum + r.total_holding_shares, 0);
+        const browseRowHint = [
+          `${code} — ${s.issuer}`,
+          `${t('stat_major_holders')}: ${s.rows.length}`,
+          `${t('col_total_shares')}: ${formatInt(totalShares)}`,
+          th ? `${t('stat_largest_holder')}: ${th.investor_name} (${formatPct(th.percentage)})` : '',
+          sorted.length ? `${t('browse_tt_top_holders')}:\n${topLines.join('\n')}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n');
+        return {
+          key: code,
+          code,
+          issuer: s.issuer,
+          holders: s.rows.length,
+          totalShares,
+          topHolder: s.rows.reduce((a, b) => (a.percentage > b.percentage ? a : b)).investor_name,
+          browseRowHint,
+        };
+      });
     }
     if (searchMode === 'nationality') {
       const natMap = new Map<
@@ -192,7 +487,7 @@ export function ExplorerPage() {
       stocks: e.stocks.size,
       rows: e.rows,
     }));
-  }, [state.status, rows, invMap, stockMap, searchMode]);
+  }, [state.status, rows, invMap, stockMap, searchMode, groups, t]);
 
   const browseFiltered = useMemo(() => {
     const qq = q.trim().toLowerCase();
@@ -212,6 +507,19 @@ export function ExplorerPage() {
             .toLowerCase()
             .includes(qq) ||
           String(row.issuer ?? '')
+            .toLowerCase()
+            .includes(qq)
+        );
+      });
+    }
+    if (searchMode === 'group') {
+      return browseData.filter((r) => {
+        const row = r as { label?: string; key?: string };
+        return (
+          String(row.label ?? '')
+            .toLowerCase()
+            .includes(qq) ||
+          String(row.key ?? '')
             .toLowerCase()
             .includes(qq)
         );
@@ -281,23 +589,127 @@ export function ExplorerPage() {
         ? state.nationalityList.filter((n) => n.toLowerCase().includes(qq)).slice(0, 12)
         : [];
     }
+    if (searchMode === 'group') {
+      return (groups ?? [])
+        .filter((g) => g.label.toLowerCase().includes(qq) || g.id.toLowerCase().includes(qq))
+        .slice(0, 12)
+        .map((g) => g.id);
+    }
     return state.status === 'ready'
       ? state.domicileList.filter((n) => n.toLowerCase().includes(qq)).slice(0, 12)
       : [];
-  }, [q, searchMode, state, stockMap]);
+  }, [q, searchMode, state, stockMap, groups]);
 
   function clearDetail() {
     setSelectedInvestor(null);
     setSelectedStock(null);
+    setSelectedGroupId(null);
+    setDetailStockHolderKey(null);
+    setDetailInvestorStockKey(null);
+    setDetailGroupTableFilter(null);
     setSp(new URLSearchParams());
   }
 
-  if (state.status !== 'ready') {
+  if (state.status === 'loading' || state.status === 'idle') {
     return (
-      <section className="page-section page-active">
+      <section id="page-explorer" className="page-section page-active">
         <div className="page-content">
           <div className="widget-placeholder">
             <div className="spinner" />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (state.status === 'error') {
+    return (
+      <section id="page-explorer" className="page-section page-active">
+        <div className="page-content">
+          <div className="error-banner" style={{ marginTop: 80 }}>
+            <h3>{t('failed_load')}</h3>
+            <p>{t('failed_load_msg')}</p>
+            <p style={{ marginTop: 12, fontSize: 12, opacity: 0.6 }}>{state.message}</p>
+            <p style={{ marginTop: 20 }}>
+              <button type="button" className="btn btn-primary" onClick={() => void reload()}>
+                {t('failed_load_retry')}
+              </button>
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (selectedGroupId && groups === null) {
+    return (
+      <section id="page-explorer" className="page-section page-active">
+        <div className="page-content">
+          <div className="widget-placeholder">
+            <div className="spinner" />
+            <p style={{ marginTop: 12, color: 'var(--text-muted)' }}>{t('group_loading')}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (selectedGroupId && groups && !selectedGroupMeta) {
+    return (
+      <section id="page-explorer" className="page-section page-active">
+        <div className="page-content">
+          <button type="button" className="investor-back" onClick={clearDetail}>
+            {t('back_to_search')}
+          </button>
+          <p style={{ marginTop: 24, color: 'var(--text-muted)' }}>{t('group_not_found')}</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (selectedGroupId && selectedGroupMeta) {
+    return (
+      <section id="page-explorer" className="page-section page-active">
+        <div className="page-content">
+          <div className="dashboard visible" id="dashboard-group">
+            <button type="button" className="investor-back" onClick={clearDetail}>
+              {t('back_to_search')}
+            </button>
+            <div className="investor-header">
+              <div className="stock-logo-wrap">
+                <div className="investor-avatar">{selectedGroupMeta.label.slice(0, 2).toUpperCase()}</div>
+                <div>
+                  <h2>{esc(selectedGroupMeta.label)}</h2>
+                  {selectedGroupMeta.confidence ? (
+                    <div className="sub">
+                      <span className={`confidence ${selectedGroupMeta.confidence}`}>
+                        {selectedGroupMeta.confidence}
+                      </span>
+                      {' · '}
+                      {formatInt(selectedGroupMeta.member_count)} {t('members')} ·{' '}
+                      {formatInt(selectedGroupMeta.total_stocks)} {t('stocks')}
+                    </div>
+                  ) : (
+                    <div className="sub">
+                      {formatInt(selectedGroupMeta.member_count)} {t('members')} ·{' '}
+                      {formatInt(selectedGroupMeta.total_stocks)} {t('stocks')}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="top-row top-row--explorer-graph-full">
+              <div className="card card--graph">
+                <div className="card-title">{t('group_network_title')}</div>
+                <div id="group-graph-container" ref={graphGrpRef} style={{ minHeight: 'min(92vh, 940px)' }} />
+                <div className="legend" id="group-legend" ref={groupLegendRef} />
+              </div>
+              <div className="card">
+                <div className="card-title">{t('group_portfolio_alloc')}</div>
+                <div className="pie-inner" id="group-pie-container" ref={pieGrpRef} />
+              </div>
+            </div>
+            <InvestorHoldingsTable rows={groupTableRows} t={t} typeLabel={typeLabel} showHolderColumn />
           </div>
         </div>
       </section>
@@ -320,10 +732,10 @@ export function ExplorerPage() {
                 </div>
               </div>
             </div>
-            <div className="top-row">
+            <div className="top-row top-row--explorer-graph-full">
               <div className="card card--graph">
                 <div className="card-title">{t('ownership_network')}</div>
-                <div id="graph-container" ref={graphInvRef} style={{ minHeight: 520 }} />
+                <div id="graph-container" ref={graphInvRef} style={{ minHeight: 680 }} />
                 <div className="legend" id="legend" />
               </div>
               <div className="card">
@@ -331,7 +743,7 @@ export function ExplorerPage() {
                 <div className="pie-inner" id="pie-container" ref={pieInvRef} />
               </div>
             </div>
-            <InvestorHoldingsTable rows={investorRows} t={t} typeLabel={typeLabel} />
+            <InvestorHoldingsTable rows={investorTableRows} t={t} typeLabel={typeLabel} />
           </div>
         </div>
       </section>
@@ -356,10 +768,10 @@ export function ExplorerPage() {
                 </div>
               </div>
             </div>
-            <div className="top-row">
+            <div className="top-row top-row--explorer-graph-full">
               <div className="card card--graph">
                 <div className="card-title">{t('holder_network')}</div>
-                <div id="stock-graph-container" ref={graphStRef} style={{ minHeight: 520 }} />
+                <div id="stock-graph-container" ref={graphStRef} style={{ minHeight: 680 }} />
                 <div className="legend" id="stock-legend" />
               </div>
               <div className="card">
@@ -375,7 +787,7 @@ export function ExplorerPage() {
                 </div>
               </div>
             </div>
-            <StockHoldersTable rows={stockRows} t={t} typeLabel={typeLabel} />
+            <StockHoldersTable rows={stockTableRows} t={t} typeLabel={typeLabel} />
           </div>
         </div>
       </section>
@@ -404,14 +816,16 @@ export function ExplorerPage() {
                       ? t('search_stock')
                       : searchMode === 'nationality'
                         ? t('search_nationality')
-                        : t('search_domicile')
+                        : searchMode === 'domicile'
+                          ? t('search_domicile')
+                          : t('search_group')
                 }
                 autoComplete="off"
                 aria-label="Search"
               />
             </div>
             <div className="search-tabs" role="tablist">
-              {(['investor', 'stock', 'nationality', 'domicile'] as const).map((m) => (
+              {(['investor', 'stock', 'nationality', 'domicile', 'group'] as const).map((m) => (
                 <button
                   key={m}
                   type="button"
@@ -423,6 +837,7 @@ export function ExplorerPage() {
                     setQ('');
                     if (m === 'investor') setBrowseSort({ key: 'totalShares', asc: false });
                     else if (m === 'stock') setBrowseSort({ key: 'holders', asc: false });
+                    else if (m === 'group') setBrowseSort({ key: 'member_count', asc: false });
                     else setBrowseSort({ key: 'rows', asc: false });
                   }}
                 >
@@ -447,6 +862,9 @@ export function ExplorerPage() {
                       } else if (searchMode === 'stock') {
                         setSp(new URLSearchParams({ stock: item }));
                         setSelectedStock(item);
+                      } else if (searchMode === 'group') {
+                        setSp(new URLSearchParams({ group: item }));
+                        setSelectedGroupId(item);
                       } else if (searchMode === 'nationality') {
                         navigate('/holdings', { state: { filterNationality: item } });
                       } else {
@@ -455,12 +873,28 @@ export function ExplorerPage() {
                       setQ('');
                     }}
                   >
-                    {item}
+                    {searchMode === 'group'
+                      ? groups?.find((g) => g.id === item)?.label ?? item
+                      : item}
                   </button>
                 ))}
               </div>
             ) : null}
           </div>
+        </div>
+
+        <div className="card card--graph explorer-browse-overview" aria-labelledby="explorer-overview-title">
+          <div className="explorer-browse-overview-head">
+            <h3 id="explorer-overview-title" className="explorer-browse-overview-title">
+              {t(explorerNetTitleKey[searchMode])}
+            </h3>
+          </div>
+          <div
+            className="explorer-browse-overview-graph"
+            ref={browseOverviewRef}
+            role="img"
+            aria-label={t(explorerNetTitleKey[searchMode])}
+          />
         </div>
 
         <div id="explorerEmpty">
@@ -473,7 +907,9 @@ export function ExplorerPage() {
                     ? t('browse_stocks')
                     : searchMode === 'nationality'
                       ? t('browse_nationalities')
-                      : t('browse_domiciles')}
+                      : searchMode === 'domicile'
+                        ? t('browse_domiciles')
+                        : t('browse_groups')}
               </h3>
               <span className="browse-count" id="browseCount">
                 {formatInt(browseSlice.total)} {t('items')}
@@ -492,6 +928,10 @@ export function ExplorerPage() {
               onPickStock={(code) => {
                 setSp(new URLSearchParams({ stock: code }));
                 setSelectedStock(code);
+              }}
+              onPickGroup={(id) => {
+                setSp(new URLSearchParams({ group: id }));
+                setSelectedGroupId(id);
               }}
               onNatDom={(mode, name) => {
                 if (mode === 'nationality')
@@ -517,6 +957,7 @@ function BrowseTable({
   setBrowseSort,
   onPickInvestor,
   onPickStock,
+  onPickGroup,
   onNatDom,
   t,
   setBrowsePage,
@@ -529,6 +970,7 @@ function BrowseTable({
   setBrowseSort: (s: { key: string; asc: boolean }) => void;
   onPickInvestor: (n: string) => void;
   onPickStock: (c: string) => void;
+  onPickGroup: (id: string) => void;
   onNatDom: (m: 'nationality' | 'domicile', name: string) => void;
   t: (k: string) => string;
   setBrowsePage: (n: number) => void;
@@ -557,12 +999,19 @@ function BrowseTable({
             { key: 'totalShares', label: t('col_total_shares'), num: true },
             { key: 'topHolder', label: t('stat_largest_holder'), num: false },
           ]
-        : [
-            { key: 'name', label: t(`tab_${mode}`), num: false },
-            { key: 'investors', label: t('investors'), num: true },
-            { key: 'stocks', label: t('col_stocks'), num: true },
-            { key: 'rows', label: t('rows'), num: true },
-          ];
+        : mode === 'group'
+          ? [
+              { key: 'label', label: t('col_group'), num: false },
+              { key: 'member_count', label: t('members'), num: true },
+              { key: 'total_stocks', label: t('col_stocks'), num: true },
+              { key: 'confidence', label: t('col_confidence'), num: false },
+            ]
+          : [
+              { key: 'name', label: t(`tab_${mode}`), num: false },
+              { key: 'investors', label: t('investors'), num: true },
+              { key: 'stocks', label: t('col_stocks'), num: true },
+              { key: 'rows', label: t('rows'), num: true },
+            ];
 
   return (
     <div className="table-card">
@@ -607,9 +1056,16 @@ function BrowseTable({
               slice.map((row) => (
                 <tr
                   key={String(row.key)}
+                  title={
+                    (mode === 'investor' || mode === 'stock') &&
+                    typeof (row as { browseRowHint?: string }).browseRowHint === 'string'
+                      ? (row as { browseRowHint: string }).browseRowHint
+                      : undefined
+                  }
                   onClick={() => {
                     if (mode === 'investor') onPickInvestor(String(row.name));
                     else if (mode === 'stock') onPickStock(String(row.code));
+                    else if (mode === 'group') onPickGroup(String(row.key));
                     else if (mode === 'nationality') onNatDom('nationality', String(row.name));
                     else onNatDom('domicile', String(row.name));
                   }}
@@ -628,25 +1084,34 @@ function BrowseTable({
                           {typeof v === 'number' ? formatInt(v) : String(v ?? '—')}
                         </td>
                       );
+                    if (mode === 'group' && c.key === 'label') {
+                      return (
+                        <td key={c.key} title={String(row.key ?? '')}>
+                          {String(v ?? '—')}
+                        </td>
+                      );
+                    }
                     if (mode === 'investor' && c.key === 'type') {
                       const raw = String(v ?? '—');
                       const parts = raw === '—' ? [] : raw.split(',').map((s) => s.trim()).filter(Boolean);
                       return (
-                        <td key={c.key} title={raw}>
-                          {parts.length
-                            ? parts.map((tp) => (
-                                <span
-                                  key={tp}
-                                  className="explorer-type-chip"
-                                  style={{
-                                    background: `${TYPE_COLORS[tp] ?? '#888'}28`,
-                                    color: TYPE_COLORS[tp] ?? '#aaa',
-                                  }}
-                                >
-                                  {tp}
-                                </span>
-                              ))
-                            : '—'}
+                        <td key={c.key} className="cell-types" title={raw}>
+                          <div className="explorer-type-cell">
+                            {parts.length
+                              ? parts.map((tp) => (
+                                  <span
+                                    key={tp}
+                                    className="explorer-type-chip"
+                                    style={{
+                                      background: `${TYPE_COLORS[tp] ?? '#888'}28`,
+                                      color: TYPE_COLORS[tp] ?? '#aaa',
+                                    }}
+                                  >
+                                    {tp}
+                                  </span>
+                                ))
+                              : '—'}
+                          </div>
                         </td>
                       );
                     }
@@ -720,16 +1185,63 @@ function BrowseTable({
   );
 }
 
+const INV_HOLDER_COL = {
+  key: 'investor_name' as const,
+  lk: 'col_investor_name' as const,
+  tip: 'investor_name' as const,
+  numeric: false as const,
+};
+
+const INV_DETAIL_COLS_BASE = [
+  { key: 'share_code' as const, lk: 'col_ticker' as const, tip: 'share_code', numeric: false },
+  { key: 'issuer_name' as const, lk: 'col_issuer' as const, tip: 'issuer_name', numeric: false },
+  { key: 'investor_type' as const, lk: 'col_type' as const, tip: 'investor_type', numeric: false },
+  { key: 'local_foreign' as const, lk: 'col_lf' as const, tip: 'local_foreign', numeric: false },
+  { key: 'total_holding_shares' as const, lk: 'col_total_shares' as const, tip: 'total_holding_shares', numeric: true },
+  { key: 'percentage' as const, lk: 'col_stake_pct' as const, tip: 'percentage', numeric: true },
+];
+
 function InvestorHoldingsTable({
   rows,
   t,
   typeLabel,
+  showHolderColumn,
 }: {
   rows: HolderRow[];
   t: (k: string) => string;
   typeLabel: (tp: string) => string;
+  showHolderColumn?: boolean;
 }) {
-  const sorted = [...rows].sort((a, b) => b.percentage - a.percentage);
+  const [sort, setSort] = useState<{ key: keyof HolderRow; asc: boolean }>({
+    key: 'percentage',
+    asc: false,
+  });
+  const detailCols = useMemo(
+    () => (showHolderColumn ? [INV_HOLDER_COL, ...INV_DETAIL_COLS_BASE] : INV_DETAIL_COLS_BASE),
+    [showHolderColumn]
+  );
+  const sorted = useMemo(() => {
+    return [...rows].sort((a, b) => {
+      const va = a[sort.key];
+      const vb = b[sort.key];
+      const aEmpty = va === '' || va == null;
+      const bEmpty = vb === '' || vb == null;
+      let cmp = 0;
+      if (aEmpty && bEmpty) cmp = 0;
+      else if (aEmpty) cmp = 1;
+      else if (bEmpty) cmp = -1;
+      else if (typeof va === 'string' && typeof vb === 'string') {
+        cmp = va.localeCompare(vb);
+      } else {
+        cmp = (Number(va) || 0) - (Number(vb) || 0);
+      }
+      const primary = sort.asc ? cmp : -cmp;
+      if (primary !== 0) return primary;
+      const sc = a.share_code.localeCompare(b.share_code);
+      if (sc !== 0) return sc;
+      return a.investor_name.localeCompare(b.investor_name);
+    });
+  }, [rows, sort]);
   return (
     <div className="table-card">
       <div className="card-title">{t('holdings_detail')}</div>
@@ -737,31 +1249,102 @@ function InvestorHoldingsTable({
         <table>
           <thead>
             <tr>
-              <th>{t('col_ticker')}</th>
-              <th>{t('col_issuer')}</th>
-              <th>{t('col_type')}</th>
-              <th>{t('col_lf')}</th>
-              <th className="num">{t('col_total_shares')}</th>
-              <th className="num">{t('col_stake_pct')}</th>
+              {detailCols.map((c) => (
+                <th
+                  key={c.key}
+                  className={c.numeric ? 'num' : undefined}
+                  style={{ cursor: 'pointer' }}
+                  data-tip={t(`col_tips.${c.tip}`, { defaultValue: '' }) || t('tip_table_sort_column')}
+                  onClick={() =>
+                    setSort((prev) =>
+                      prev.key === c.key
+                        ? { key: c.key, asc: !prev.asc }
+                        : { key: c.key, asc: c.numeric ? false : true }
+                    )
+                  }
+                >
+                  <span className="th-inner">
+                    <span className="th-label">{t(c.lk)}</span>
+                    {sort.key === c.key ? (
+                      <span className="th-sort" aria-hidden>
+                        {sort.asc ? <IconSortAsc /> : <IconSortDesc />}
+                      </span>
+                    ) : null}
+                  </span>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {sorted.map((r) => (
-              <tr key={r.share_code}>
-                <td>{esc(r.share_code)}</td>
-                <td>{esc(r.issuer_name)}</td>
-                <td>{typeLabel(r.investor_type) || r.investor_type}</td>
-                <td>{r.local_foreign === 'L' ? t('local') : r.local_foreign === 'F' ? t('foreign') : '—'}</td>
-                <td className="num">{formatInt(r.total_holding_shares)}</td>
-                <td className="num">{formatPct(r.percentage)}</td>
-              </tr>
-            ))}
+            {sorted.map((r) => {
+              const typeTip = r.investor_type
+                ? t(`type_tips.${r.investor_type}`, { defaultValue: '' })
+                : '';
+              return (
+                <tr key={`${r.investor_name}::${r.share_code}`}>
+                  {showHolderColumn ? (
+                    <td>
+                      <Link
+                        className="table-text-link"
+                        to={`/explorer?investor=${encodeURIComponent(r.investor_name)}`}
+                      >
+                        {esc(r.investor_name)}
+                      </Link>
+                    </td>
+                  ) : null}
+                  <td>
+                    <Link
+                      className="table-text-link td-ticker"
+                      to={`/explorer?stock=${encodeURIComponent(r.share_code)}`}
+                    >
+                      {esc(r.share_code)}
+                    </Link>
+                  </td>
+                  <td>{esc(r.issuer_name)}</td>
+                  <td>
+                    {r.investor_type ? (
+                      <span
+                        className="type-badge"
+                        data-tip={typeTip || undefined}
+                        style={{
+                          background: `${TYPE_COLORS[r.investor_type] ?? '#444'}22`,
+                          color: TYPE_COLORS[r.investor_type] ?? '#888',
+                        }}
+                      >
+                        {typeLabel(r.investor_type) || r.investor_type}
+                      </span>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td>
+                    {r.local_foreign === 'L' ? (
+                      <span data-tip={t('tip_local')}>{t('local')}</span>
+                    ) : r.local_foreign === 'F' ? (
+                      <span data-tip={t('tip_foreign')}>{t('foreign')}</span>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td className="num">{formatInt(r.total_holding_shares)}</td>
+                  <td className="num">{formatPct(r.percentage)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
     </div>
   );
 }
+
+const STOCK_HOLDER_COLS = [
+  { key: 'investor_name' as const, lk: 'col_investor_name' as const, tip: 'investor_name', numeric: false },
+  { key: 'investor_type' as const, lk: 'col_type' as const, tip: 'investor_type', numeric: false },
+  { key: 'local_foreign' as const, lk: 'col_lf' as const, tip: 'local_foreign', numeric: false },
+  { key: 'total_holding_shares' as const, lk: 'col_total_shares' as const, tip: 'total_holding_shares', numeric: true },
+  { key: 'percentage' as const, lk: 'col_stake_pct' as const, tip: 'percentage', numeric: true },
+];
 
 function StockHoldersTable({
   rows,
@@ -772,7 +1355,31 @@ function StockHoldersTable({
   t: (k: string) => string;
   typeLabel: (tp: string) => string;
 }) {
-  const sorted = [...rows].sort((a, b) => b.percentage - a.percentage);
+  const navigate = useNavigate();
+  const [sort, setSort] = useState<{ key: keyof HolderRow; asc: boolean }>({
+    key: 'percentage',
+    asc: false,
+  });
+  const sorted = useMemo(() => {
+    return [...rows].sort((a, b) => {
+      const va = a[sort.key];
+      const vb = b[sort.key];
+      const aEmpty = va === '' || va == null;
+      const bEmpty = vb === '' || vb == null;
+      let cmp = 0;
+      if (aEmpty && bEmpty) cmp = 0;
+      else if (aEmpty) cmp = 1;
+      else if (bEmpty) cmp = -1;
+      else if (typeof va === 'string' && typeof vb === 'string') {
+        cmp = va.localeCompare(vb);
+      } else {
+        cmp = (Number(va) || 0) - (Number(vb) || 0);
+      }
+      const primary = sort.asc ? cmp : -cmp;
+      if (primary !== 0) return primary;
+      return a.investor_name.localeCompare(b.investor_name);
+    });
+  }, [rows, sort]);
   return (
     <div className="table-card">
       <div className="card-title">{t('major_shareholders')}</div>
@@ -780,23 +1387,89 @@ function StockHoldersTable({
         <table>
           <thead>
             <tr>
-              <th>{t('col_investor_name')}</th>
-              <th>{t('col_type')}</th>
-              <th>{t('col_lf')}</th>
-              <th className="num">{t('col_total_shares')}</th>
-              <th className="num">{t('col_stake_pct')}</th>
+              {STOCK_HOLDER_COLS.map((c) => (
+                <th
+                  key={c.key}
+                  className={c.numeric ? 'num' : undefined}
+                  style={{ cursor: 'pointer' }}
+                  data-tip={t(`col_tips.${c.tip}`, { defaultValue: '' }) || t('tip_table_sort_column')}
+                  onClick={() =>
+                    setSort((prev) =>
+                      prev.key === c.key
+                        ? { key: c.key, asc: !prev.asc }
+                        : { key: c.key, asc: c.numeric ? false : true }
+                    )
+                  }
+                >
+                  <span className="th-inner">
+                    <span className="th-label">{t(c.lk)}</span>
+                    {sort.key === c.key ? (
+                      <span className="th-sort" aria-hidden>
+                        {sort.asc ? <IconSortAsc /> : <IconSortDesc />}
+                      </span>
+                    ) : null}
+                  </span>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {sorted.map((r) => (
-              <tr key={r.investor_name}>
-                <td>{esc(r.investor_name)}</td>
-                <td>{typeLabel(r.investor_type) || r.investor_type}</td>
-                <td>{r.local_foreign === 'L' ? t('local') : r.local_foreign === 'F' ? t('foreign') : '—'}</td>
-                <td className="num">{formatInt(r.total_holding_shares)}</td>
-                <td className="num">{formatPct(r.percentage)}</td>
-              </tr>
-            ))}
+            {sorted.map((r) => {
+              const typeTip = r.investor_type
+                ? t(`type_tips.${r.investor_type}`, { defaultValue: '' })
+                : '';
+              return (
+                <tr key={r.investor_name}>
+                  <td>
+                    <button
+                      type="button"
+                      className="linkish"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'inherit',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        padding: 0,
+                        font: 'inherit',
+                      }}
+                      onClick={() =>
+                        navigate(`/explorer?investor=${encodeURIComponent(r.investor_name)}`)
+                      }
+                    >
+                      {esc(r.investor_name)}
+                    </button>
+                  </td>
+                  <td>
+                    {r.investor_type ? (
+                      <span
+                        className="type-badge"
+                        data-tip={typeTip || undefined}
+                        style={{
+                          background: `${TYPE_COLORS[r.investor_type] ?? '#444'}22`,
+                          color: TYPE_COLORS[r.investor_type] ?? '#888',
+                        }}
+                      >
+                        {typeLabel(r.investor_type) || r.investor_type}
+                      </span>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td>
+                    {r.local_foreign === 'L' ? (
+                      <span data-tip={t('tip_local')}>{t('local')}</span>
+                    ) : r.local_foreign === 'F' ? (
+                      <span data-tip={t('tip_foreign')}>{t('foreign')}</span>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td className="num">{formatInt(r.total_holding_shares)}</td>
+                  <td className="num">{formatPct(r.percentage)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

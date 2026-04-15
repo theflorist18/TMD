@@ -50,11 +50,11 @@ function serveRepoOutput() {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, '');
-  const apiTarget = env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8000';
+  const base = (env.VITE_BASE_URL ?? '').trim() || './';
 
   return {
     root: __dirname,
-    base: './',
+    base,
     plugins: [react(), serveRepoOutput()],
     resolve: {
       alias: { '@': path.resolve(__dirname, 'src') },
@@ -62,21 +62,8 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       fs: { allow: [path.resolve(__dirname, '..')] },
-      proxy: {
-        '/api': {
-          target: apiTarget,
-          changeOrigin: true,
-        },
-      },
     },
-    preview: {
-      proxy: {
-        '/api': {
-          target: apiTarget,
-          changeOrigin: true,
-        },
-      },
-    },
+    preview: {},
     build: {
       outDir: 'dist',
       emptyOutDir: true,

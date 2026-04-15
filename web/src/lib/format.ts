@@ -1,10 +1,12 @@
 const fmt = new Intl.NumberFormat('en-US');
 
 export function formatInt(n: number) {
+  if (!Number.isFinite(n)) return '—';
   return fmt.format(n);
 }
 
 export function formatPct(v: number) {
+  if (!Number.isFinite(v)) return '—';
   return `${v.toFixed(2)}%`;
 }
 

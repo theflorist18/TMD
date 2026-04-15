@@ -6,9 +6,11 @@ debug-*.log
 .venv/
 venv/
 env/
-backend/.venv/
-backend/db.sqlite3
-backend/.env
+# Local Vite overrides (API URL, dev flags — never commit real secrets)
+web/.env
+web/.env.local
+web/.env.*.local
+.env.local
 
 # GitNexus (local graph index; do not commit)
 .gitnexus/

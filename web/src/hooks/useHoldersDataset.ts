@@ -5,7 +5,7 @@ import {
   parseHoldersCsv,
   type HolderRow,
 } from '@/domain/holders';
-import { authorizedFetch, holdersCsvUrl } from '@/api/client';
+import { fetchDataset, holdersCsvUrl } from '@/api/client';
 
 export type HoldersState =
   | { status: 'idle' | 'loading' }
@@ -26,7 +26,7 @@ export function useHoldersDataset() {
     setState({ status: 'loading' });
     try {
       const url = holdersCsvUrl();
-      const resp = await authorizedFetch(url);
+      const resp = await fetchDataset(url);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const text = await resp.text();
       const rows = parseHoldersCsv(text);

@@ -1,0 +1,81 @@
+# Static site only — no backend. Enable: Settings → Pages → Source “GitHub Actions”.
+# Publishes web/dist with SPA routing (404.html) and copies repo output/* into dist/output/.
+
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve Vite base path for Pages
+        id: pages_base
+        env:
+          REPO_NAME: ${{ github.event.repository.name }}
+          REPO_OWNER: ${{ github.repository_owner }}
+        shell: bash
+        run: |
+          # user/org site repo: https://owner.github.io/  → base /
+          if [[ "$REPO_NAME" == "$REPO_OWNER.github.io" ]]; then
+            echo "path=/" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=/${REPO_NAME}/" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install and build (static, no API)
+        working-directory: web
+        env:
+          VITE_BASE_URL: ${{ steps.pages_base.outputs.path }}
+        run: |
+          npm ci
+          npm run build:pages
+          npm run verify:pages-dist
+
+      - name: Copy datasets into site (output/ → dist/output/)
+        shell: bash
+        run: |
+          mkdir -p web/dist/output
+          shopt -s nullglob
+          copied=0
+          for f in output/*; do
+            if [[ -f "$f" ]]; then
+              cp "$f" web/dist/output/
+              copied=$((copied + 1))
+            fi
+          done
+          if [[ "$copied" -eq 0 ]]; then
+            echo "::notice::No files under output/ in this checkout (only output/.gitkeep is tracked by default). Commit CSV/JSON you want public, or upload dist/output yourself after build."
+          fi
+
+      - uses: actions/configure-pages@v4
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

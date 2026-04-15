@@ -1,20 +1,11 @@
 {
   "name": "tmd",
   "private": true,
-  "description": "Transparent Market Data — tooling + static web. GitNexus is optional dev tooling (see AGENTS.md).",
+  "description": "Transparent Market Data — static web, data scripts, Docker (see README).",
   "scripts": {
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
-    "docker:test": "docker compose up -d && docker compose --profile test run --rm smoke-test",
-    "gitnexus:analyze": "gitnexus analyze --skip-agents-md",
-    "gitnexus:analyze:skills": "gitnexus analyze --skip-agents-md --skills",
-    "gitnexus:setup": "gitnexus setup",
-    "gitnexus:status": "gitnexus status",
-    "gitnexus:serve": "gitnexus serve",
-    "gitnexus:mcp": "gitnexus mcp"
-  },
-  "devDependencies": {
-    "gitnexus": "^1.6.1"
+    "docker:test": "docker compose up -d && docker compose --profile test run --rm smoke-test"
   }
 }

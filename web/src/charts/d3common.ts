@@ -15,6 +15,9 @@ export const TYPE_COLORS: Record<string, string> = {
 
 export const GRAPH_LINK_STROKE = 'rgba(93, 184, 217, 0.55)';
 
+/** Thin edges similar to ggraph `geom_edge_link(alpha=0.2, width=0.3)` on dark UI. */
+export const GRAPH_LINK_STROKE_SOFT = 'rgba(190, 198, 218, 0.22)';
+
 export function graphNodeFillForType(tp: string) {
   const base = TYPE_COLORS[tp] || TYPE_COLORS[''];
   const c = d3.color(base);

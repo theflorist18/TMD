@@ -90,10 +90,11 @@ export function Layout() {
                 ? '—'
                 : (dataAsOf ?? '—')}
           </div>
-          <div className="lang-toggle" aria-label="Switch language">
+          <div className="lang-toggle" role="group" aria-label={t('lang_toggle_aria')}>
             <button
               type="button"
               className={`lang-btn${lang === 'en' ? ' active' : ''}`}
+              aria-pressed={lang === 'en'}
               onClick={() => setAppLanguage('en')}
             >
               EN
@@ -101,6 +102,7 @@ export function Layout() {
             <button
               type="button"
               className={`lang-btn${lang === 'id' ? ' active' : ''}`}
+              aria-pressed={lang === 'id'}
               onClick={() => setAppLanguage('id')}
             >
               ID
@@ -113,7 +115,7 @@ export function Layout() {
               onClick={logout}
               style={{ marginLeft: 8 }}
             >
-              Log out
+              {t('nav_logout')}
             </button>
           )}
         </div>
