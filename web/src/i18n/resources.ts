@@ -120,6 +120,8 @@ export const I18N = {
     failed_load_msg: 'Could not fetch the ownership dataset. Please check that output/one_percent_holders.csv exists (repo output/ next to web/) and reload the page.',
     failed_load_retry: 'Try again',
     failed_intel: 'Failed to load intelligence data',
+    failed_intel_hint:
+      'This tab needs output/investor_profiles.json and output/investor_groups.json next to your CSV (same output/ folder the site serves). For GitHub Pages, commit those files into the repo so the deploy workflow copies them into dist/output/. Very large JSON may require Git LFS or a smaller export.',
     loading_chart: 'Loading chart...', loading_tape: 'Loading ticker tape...', loading_heatmap: 'Loading heatmap...',
     network_hint_stock: 'Click a holder to view their profile · Drag to rearrange · Hover for details',
     network_hint_inv: 'Click a stock to view its profile · Drag to rearrange · Hover for details',
@@ -351,6 +353,8 @@ export const I18N = {
     failed_load_msg: 'Tidak dapat mengambil dataset kepemilikan. Pastikan output/one_percent_holders.csv ada (folder output/ di repo di samping web/) dan muat ulang halaman.',
     failed_load_retry: 'Coba lagi',
     failed_intel: 'Gagal memuat data intelijen',
+    failed_intel_hint:
+      'Tab ini membutuhkan output/investor_profiles.json dan output/investor_groups.json di folder output/ yang sama dengan CSV. Untuk GitHub Pages, commit file tersebut agar workflow menyalinnya ke dist/output/. JSON sangat besar mungkin perlu Git LFS atau export yang lebih kecil.',
     loading_chart: 'Memuat grafik...', loading_tape: 'Memuat ticker...', loading_heatmap: 'Memuat peta panas...',
     network_hint_stock: 'Klik pemegang untuk melihat profil · Seret untuk mengatur · Arahkan kursor untuk detail',
     network_hint_inv: 'Klik saham untuk melihat profil · Seret untuk mengatur · Arahkan kursor untuk detail',

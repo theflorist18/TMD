@@ -12,7 +12,13 @@ import {
   IconTable,
   IconTrending,
 } from '@/components/Icons';
-import brandLogoUrl from '../../assets/TMD_Logo.png';
+
+/** Served from `public/brand-logo.png` so GitHub Pages always has a stable URL (same as favicon). */
+function brandLogoPublicUrl(): string {
+  const b = import.meta.env.BASE_URL || '/';
+  const base = b.endsWith('/') ? b : `${b}/`;
+  return `${base}brand-logo.png`;
+}
 
 export function Layout() {
   const { t, i18n } = useTranslation();
@@ -36,7 +42,7 @@ export function Layout() {
       <header>
         <div className="header-inner">
           <NavLink className="logo" to="/" aria-label="Go to home page">
-            <img className="brand-logo" src={brandLogoUrl} alt="" aria-hidden />
+            <img className="brand-logo" src={brandLogoPublicUrl()} alt="" aria-hidden />
             <span>{t('brand')}</span>
           </NavLink>
           <nav aria-label="Main navigation">

@@ -1,0 +1,785 @@
+[
+  {
+    "id": "grp_danantara_state_holdings",
+    "label": "Danantara / State Holdings",
+    "members": [
+      "PERUSAHAAN PERSEROAN (PERSERO) PT DANANTARA ASSET MANAGEMENT",
+      "PT DANANTARA ASSET MANAGEMENT (PERSERO)"
+    ],
+    "member_count": 2,
+    "total_stocks": 12,
+    "total_pct_sum": 764.5,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_widjaja_family",
+    "label": "Widjaja Family",
+    "members": [
+      "ANTHONNY WIDJAJA",
+      "BEATRICE WANGSAWIDJAJA",
+      "BERNARDI WIDJAJAKUSUMA",
+      "BRYAN WANGSAWIDJAJA",
+      "BRYNA WANGSAWIDJAJA",
+      "CHANDRA NATALIE WIDJAJA",
+      "CHRISTOPHER WIDJAJA",
+      "DJADJANG TANUWIDJAJA",
+      "ENTARIO WIDJAJA SUSANTO",
+      "FRANKY OESMAN WIDJAJA",
+      "HANDY WIDJAJA",
+      "HENDRY JONATHAN WIDJAJA",
+      "HERRIJANTO WIDJAJA",
+      "INDAHTATI WIDJAJADI",
+      "JASON WIDJAJA",
+      "KARTA WIDJAJA",
+      "KATHRIN WIDJAJA",
+      "KENTJANA WIDJAJA",
+      "LANIWATI WIDJAJA",
+      "LINDAWATI WIDJAJA",
+      "MARIA WIDJAJA",
+      "MUKTAR WIDJAJA",
+      "OKI WIDJAJA",
+      "PENTA WIDJAJA INVESTINDO",
+      "PRAWIRAWIDJAJA PRAKARSA PT",
+      "PT WIDJAJATUNGGAL SEJAHTERA",
+      "PT. WIDJAJA BERKAT GEMILANG",
+      "REINHART WIDJAJA HAKIM",
+      "ROBBY WIDJAJA",
+      "SABANA PRAWIRA WIDJAJA",
+      "SAMUDERA PRAWIRAWIDJAJA",
+      "SIANG HADI WIDJAJA",
+      "SUHENDRA PRAWIRAWIDJAJA",
+      "SUTIADI WIDJAJA",
+      "TURNIADY WIDJAJA",
+      "VONNY WIDJAJANTI SUTIOSO",
+      "WAHJUDI WIDJAJA",
+      "WIRIADY WIDJAJA",
+      "YAYASAN KHARISMA WIDJAJA"
+    ],
+    "member_count": 39,
+    "total_stocks": 43,
+    "total_pct_sum": 496.14,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_salim_group",
+    "label": "Salim Group",
+    "members": [
+      "AGUS NURSALIM",
+      "AGUS SALIM",
+      "ANTHONI SALIM",
+      "BHAKTI SALIM",
+      "DIANAWATI SALIM",
+      "DR. Richard Nursalim",
+      "FRANXISCUS AFAT ADINATA NURSALIM",
+      "FREDDY NURSALIM",
+      "HENDRIK NURSALIM",
+      "HERYANTO SALIM",
+      "INDOFOOD AGRI RESOURCES LTD.",
+      "INDOFOOD CBP SUKSES MAKMUR Tbk",
+      "INDOFOOD SUKSES MAKMUR TBK",
+      "PT SALIM IVOMAS PRATAMA TBK",
+      "PT. INDORITEL MAKMUR INTERNASIONAL TBK",
+      "PT. SALIM CHEMICALS CORPORA",
+      "SALIM LIM",
+      "WELLY SETIADI SALIM",
+      "WILLY NURSALIM",
+      "XAVERIUS NURSALIM"
+    ],
+    "member_count": 20,
+    "total_stocks": 32,
+    "total_pct_sum": 416.03,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_tanoko_avian_group",
+    "label": "Tanoko / Avian Group",
+    "members": [
+      "PT TANCORP GLOBAL SENTOSA",
+      "PT TANCORP SURYA SENTOSA",
+      "PT TANCORP SURYA SUKSES",
+      "PT. TANCORP GLOBAL ABADI",
+      "ROBERT CHRISTIAN TANOKO",
+      "RUDI TANOKO",
+      "TANCORP INVESTAMA MULIA, PT",
+      "TANCORP MEGA BUANA PT",
+      "TANOKO MULYO ATMODJO"
+    ],
+    "member_count": 9,
+    "total_stocks": 12,
+    "total_pct_sum": 365.6,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_astra_group",
+    "label": "Astra Group",
+    "members": [
+      "ASTRAWATI ALUWI",
+      "PT ASTRA HEALTHCARE INDONESIA",
+      "PT ASTRA INTERNATIONAL TBK"
+    ],
+    "member_count": 3,
+    "total_stocks": 9,
+    "total_pct_sum": 325.78,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_mnc_group",
+    "label": "MNC Group",
+    "members": [
+      "B.RUDIJANTO TANOESOEDIBJO",
+      "HARY TANOESOEDIBJO",
+      "MNC INTERNATIONAL MIDDLE EAST LIMITED",
+      "MNC TOURISM INDONESIA TBK",
+      "PT MEDIA NUSANTARA CITRA TBK",
+      "PT MNC KAPITAL INDONESIA TBK",
+      "PT MNC Sekuritas",
+      "PT MNC VISION NETWORKS",
+      "PT. MNC ASIA HOLDING TBK",
+      "PT. MNC DIGITAL ENTERTAINMENT TBK",
+      "PT. MNC SEKURITAS"
+    ],
+    "member_count": 11,
+    "total_stocks": 21,
+    "total_pct_sum": 275.84,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_panin_group",
+    "label": "Panin Group",
+    "members": [
+      "DANA PENSIUN KARYAWAN PANIN BANK",
+      "PANIN FINANCIAL Tbk.",
+      "PANIN SEKURITAS Tbk, PT",
+      "PANINKORP, PT",
+      "PANINVEST TBK, PT",
+      "PT GAPANINDO WIRA SEMESTA",
+      "PT PANINVEST Tbk",
+      "PT. PANIN FINANCIAL Tbk",
+      "REKSA DANA PANIN DANA MAKSIMA"
+    ],
+    "member_count": 9,
+    "total_stocks": 41,
+    "total_pct_sum": 253.0,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_pertamina_group",
+    "label": "Pertamina Group",
+    "members": [
+      "DANA PENSIUN PERTAMINA",
+      "PERTAMINA POWER INDONESIA, PT",
+      "PT PERTAMINA (PERSERO)",
+      "PT PERTAMINA HULU ENERGI",
+      "PT. PERTAMINA DANA VENTURA"
+    ],
+    "member_count": 5,
+    "total_stocks": 7,
+    "total_pct_sum": 252.57,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_asabri",
+    "label": "ASABRI",
+    "members": [
+      "PERUSAHAAN PERSEROAN (PERSERO) PT. ASABRI"
+    ],
+    "member_count": 1,
+    "total_stocks": 33,
+    "total_pct_sum": 224.19,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_mufg_danamon_group",
+    "label": "MUFG / Danamon Group",
+    "members": [
+      "BANK DANAMON INDONESIA Tbk, PT - REGISTRAR",
+      "MUFG Bank Ltd"
+    ],
+    "member_count": 2,
+    "total_stocks": 10,
+    "total_pct_sum": 208.4,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_sinar_mas_group",
+    "label": "Sinar Mas Group",
+    "members": [
+      "PT ASURANSI SINAR MAS",
+      "PT SINAR MAS MULTIARTHA Tbk",
+      "PT SINAR MAS TUNGGAL",
+      "SINAR MAS CAKRAWALA",
+      "SINAR MAS MULTIARTHA TBK."
+    ],
+    "member_count": 5,
+    "total_stocks": 12,
+    "total_pct_sum": 200.34,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_adaro_alamtri_group",
+    "label": "Adaro / Alamtri Group",
+    "members": [
+      "ADARO STRATEGIC INVESTMENTS",
+      "ALAMTRI RESOURCES INDONESIA TBK PT",
+      "PT ALAMTRI INDO ALUMINIUM"
+    ],
+    "member_count": 3,
+    "total_stocks": 6,
+    "total_pct_sum": 195.31,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_emtek_group",
+    "label": "Emtek Group",
+    "members": [
+      "PT ELANG MAHKOTA TEKNOLOGI TBK"
+    ],
+    "member_count": 1,
+    "total_stocks": 3,
+    "total_pct_sum": 169.72,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 10,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_barito_group",
+    "label": "Barito Group",
+    "members": [
+      "BARITO MAS SUKSES",
+      "BARITO PACIFIC TBK",
+      "PT Barito Pacific Tbk"
+    ],
+    "member_count": 3,
+    "total_stocks": 3,
+    "total_pct_sum": 160.64,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_triputra_group",
+    "label": "Triputra Group",
+    "members": [
+      "Adi Dinamika Investindo, PT",
+      "DAYA ADICIPTA MUSTIKA",
+      "PT. DAYA ADICIPTA MUSTIKA",
+      "TRIPUTRA INVESTINDO ARYA",
+      "TRIPUTRA PERSADA MEGATARA PT."
+    ],
+    "member_count": 5,
+    "total_stocks": 9,
+    "total_pct_sum": 158.54,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_rajawali_sondakh_group",
+    "label": "Rajawali / Sondakh Group",
+    "members": [
+      "PT RAJAWALI CORPORA",
+      "PT RAJAWALI DWIPUTRA INDONESIA",
+      "PT RAJAWALI INTI",
+      "PT RAJAWALI KAPITAL EMAS",
+      "PT. RAJAWALI KAPITAL AGRO",
+      "RAJAWALI CAPITAL INTERNATIONAL, PT."
+    ],
+    "member_count": 6,
+    "total_stocks": 6,
+    "total_pct_sum": 151.39,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_maspion_group",
+    "label": "Maspion Group",
+    "members": [
+      "HUSIN INVESTAMA, PT.",
+      "PT ALIM INVESTINDO",
+      "PT GUNA INVESTINDO",
+      "PT HUSIN INVESTAMA",
+      "PT MASPION"
+    ],
+    "member_count": 5,
+    "total_stocks": 9,
+    "total_pct_sum": 144.13,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_bakrie_group",
+    "label": "Bakrie Group",
+    "members": [
+      "ANINDITHA ANESTYA BAKRIE",
+      "BAKRIE & BROTHERS TBK, PT",
+      "BAKRIE PIPE INDUSTRIES, PT",
+      "Bakrie Metal Industries, PT",
+      "PT BAKRIE CAPITAL INDONESIA",
+      "PT BAKRIE KALILA INVESTMENT",
+      "PT. Bakrie Global Ventura"
+    ],
+    "member_count": 7,
+    "total_stocks": 11,
+    "total_pct_sum": 114.53,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_thohir_family",
+    "label": "Thohir Family",
+    "members": [
+      "GAMMA ABDURRAHMAN THOHIR",
+      "GARIBALDI THOHIR",
+      "PT TRINUGRAHA THOHIR",
+      "TRINUGRAHA THOHIR HARMONI, PT"
+    ],
+    "member_count": 4,
+    "total_stocks": 13,
+    "total_pct_sum": 106.98,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_saratoga_group",
+    "label": "Saratoga Group",
+    "members": [
+      "SARATOGA INVESTAMA SEDAYA TBK PT"
+    ],
+    "member_count": 1,
+    "total_stocks": 7,
+    "total_pct_sum": 104.95,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_bri_group",
+    "label": "BRI Group",
+    "members": [
+      "PT BANK RAKYAT INDONESIA (PERSERO), TBK"
+    ],
+    "member_count": 1,
+    "total_stocks": 3,
+    "total_pct_sum": 104.89,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_argo_manunggal_group",
+    "label": "Argo Manunggal Group",
+    "members": [
+      "ARGO MANUNGGAL LAND DEVELOPMENT",
+      "PT ARGO MANUNGGAL LAND DEVELOPMENT",
+      "PT ARGO MANUNGGAL TRIASTA",
+      "PT. ARGO MANUNGGAL INTERNATIONAL"
+    ],
+    "member_count": 4,
+    "total_stocks": 4,
+    "total_pct_sum": 101.77,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_bca_group",
+    "label": "BCA Group",
+    "members": [
+      "BANK CENTRAL ASIA Tbk, PT",
+      "PT ASURANSI CENTRAL ASIA",
+      "PT ASURANSI JIWA CENTRAL ASIA RAYA"
+    ],
+    "member_count": 3,
+    "total_stocks": 10,
+    "total_pct_sum": 99.17,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_jaminan_sosial_bpjs",
+    "label": "Jaminan Sosial (BPJS)",
+    "members": [
+      "DJS KETENAGAKERJAAN PROGRAM JAMINAN HARI TUA",
+      "DJS KETENAGAKERJAAN PROGRAM JAMINAN PENSIUN"
+    ],
+    "member_count": 2,
+    "total_stocks": 39,
+    "total_pct_sum": 86.77,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_prajogo_family",
+    "label": "Prajogo Family",
+    "members": [
+      "PRAJOGO PANGESTU"
+    ],
+    "member_count": 1,
+    "total_stocks": 3,
+    "total_pct_sum": 81.42,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_fairfax_group",
+    "label": "Fairfax Group",
+    "members": [
+      "FAIRFAX ASIA LIMITED"
+    ],
+    "member_count": 1,
+    "total_stocks": 1,
+    "total_pct_sum": 80.0,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_tolaram_group",
+    "label": "Tolaram Group",
+    "members": [
+      "TOLARAM PTE. LTD."
+    ],
+    "member_count": 1,
+    "total_stocks": 1,
+    "total_pct_sum": 75.25,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_medco_group",
+    "label": "Medco Group",
+    "members": [
+      "PT MEDCO ENERGI INTERNASIONAL TBK",
+      "PT. MEDCO DAYA ABADI LESTARI"
+    ],
+    "member_count": 2,
+    "total_stocks": 3,
+    "total_pct_sum": 74.23,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_pakuwon_group",
+    "label": "Pakuwon Group",
+    "members": [
+      "PT PAKUWON ARTHANIAGA",
+      "PT PAKUWON JATI"
+    ],
+    "member_count": 2,
+    "total_stocks": 2,
+    "total_pct_sum": 72.8,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_hartono_family",
+    "label": "Hartono Family",
+    "members": [
+      "ANTONYO HARTONO TANUJAYA",
+      "Adi Indarto Hartono",
+      "BUDHI HARTONO",
+      "DENNY HARTONO, SH",
+      "DJOJO HARTONO",
+      "DODI SUHARTONO ABDULKADIR",
+      "EDDY HARTONO",
+      "HARTONO ATMADJA",
+      "HARTONO FRANSCESCO",
+      "HARTONO HERJANTO",
+      "HARTONO SUKIRYA",
+      "HARTONO UTOMO",
+      "HARTONO WONGKAR",
+      "HEFFY HARTONO",
+      "MERYANA HARTONO",
+      "RONALD HARTONO TAN",
+      "RUDI HARTONO INTAN",
+      "RUDY HARTONO",
+      "SUHARTONO",
+      "SURJA HARTONO",
+      "SURYADI HARTONO",
+      "TJOA KING HOK-HARTONO"
+    ],
+    "member_count": 22,
+    "total_stocks": 23,
+    "total_pct_sum": 67.69,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_ciputra_group",
+    "label": "Ciputra Group",
+    "members": [
+      "CIPUTRA CORPORA PT",
+      "CIPUTRA CORPORA. PT",
+      "HARTARTO CIPUTRA",
+      "PT. Ciputra Internasional",
+      "PT. Ciputra Nusantara"
+    ],
+    "member_count": 5,
+    "total_stocks": 8,
+    "total_pct_sum": 67.0,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_kawan_lama_group",
+    "label": "Kawan Lama Group",
+    "members": [
+      "PT KAWAN LAMA SEJAHTERA"
+    ],
+    "member_count": 1,
+    "total_stocks": 1,
+    "total_pct_sum": 60.0,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_mandiri_group",
+    "label": "Mandiri Group",
+    "members": [
+      "PT BANK MANDIRI"
+    ],
+    "member_count": 1,
+    "total_stocks": 1,
+    "total_pct_sum": 51.47,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_jardine_group",
+    "label": "Jardine Group",
+    "members": [
+      "JARDINE CYCLE AND CARRIAGE LIMITED"
+    ],
+    "member_count": 1,
+    "total_stocks": 1,
+    "total_pct_sum": 50.11,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_soeryadjaya_family",
+    "label": "Soeryadjaya Family",
+    "members": [
+      "EDWIN SOERYADJAYA"
+    ],
+    "member_count": 1,
+    "total_stocks": 4,
+    "total_pct_sum": 44.68,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_mayapada_group",
+    "label": "Mayapada Group",
+    "members": [
+      "MAYAPADA KARUNIA PT",
+      "MAYAPADA KASIH PT"
+    ],
+    "member_count": 2,
+    "total_stocks": 2,
+    "total_pct_sum": 36.44,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_rachmat_family",
+    "label": "Rachmat Family",
+    "members": [
+      "ARIF RACHMAT",
+      "AYU PATRICIA RACHMAT",
+      "CHRISTIAN ARIANO RACHMAT",
+      "IR. T. PERMADI RACHMAT",
+      "NY. T. P. RACHMAT L. R. IMANTO"
+    ],
+    "member_count": 5,
+    "total_stocks": 10,
+    "total_pct_sum": 35.94,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_bni_group",
+    "label": "BNI Group",
+    "members": [
+      "PERUSAHAAN PERSEROAN (PERSERO) BANK NEGARA INDONESIA"
+    ],
+    "member_count": 1,
+    "total_stocks": 2,
+    "total_pct_sum": 29.36,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_risjad_family",
+    "label": "Risjad Family",
+    "members": [
+      "Amirsyah Risjad",
+      "DEDEY RISJAD",
+      "DINA RISJAD",
+      "PT RISJADSON SURYATAMA",
+      "RADIAN RISJAD",
+      "RIZAL RISJAD",
+      "SELVIYA RISJAD DANANTO",
+      "ZARANI RISJAD"
+    ],
+    "member_count": 8,
+    "total_stocks": 8,
+    "total_pct_sum": 17.53,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_surya_citra_group",
+    "label": "Surya Citra Group",
+    "members": [
+      "PT. SURYA CITRA MEDIA TBK"
+    ],
+    "member_count": 1,
+    "total_stocks": 1,
+    "total_pct_sum": 14.15,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_lippo_group",
+    "label": "Lippo Group",
+    "members": [
+      "LIPPO-DRAGONSTONE ASIA STAR MASTER FUND",
+      "MATAHARI DEPARTMENT STORE TBK, PT"
+    ],
+    "member_count": 2,
+    "total_stocks": 3,
+    "total_pct_sum": 12.14,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_sampoerna_group",
+    "label": "Sampoerna Group",
+    "members": [
+      "UNION SAMPOERNA PT"
+    ],
+    "member_count": 1,
+    "total_stocks": 1,
+    "total_pct_sum": 5.81,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_wings_group",
+    "label": "Wings Group",
+    "members": [
+      "PT WINGS SURYA"
+    ],
+    "member_count": 1,
+    "total_stocks": 1,
+    "total_pct_sum": 3.84,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 8,
+    "protocol_min_score_kept": 8
+  },
+  {
+    "id": "grp_telkom_group",
+    "label": "Telkom Group",
+    "members": [
+      "PT TELEKOMUNIKASI SELULAR (TELKOMSEL)"
+    ],
+    "member_count": 1,
+    "total_stocks": 1,
+    "total_pct_sum": 1.99,
+    "detection_method": "name_match",
+    "confidence": "high",
+    "protocol_confidence_score": 9,
+    "protocol_min_score_kept": 8
+  }
+]

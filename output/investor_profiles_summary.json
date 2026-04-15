@@ -1,0 +1,716 @@
+{
+  "total_profiles": 5176,
+  "by_classification": {
+    "foundation": 6,
+    "company": 2279,
+    "individual": 2129,
+    "mutual_fund": 135,
+    "other": 350,
+    "insurance": 43,
+    "broker": 204,
+    "pension_fund": 19,
+    "government": 11
+  },
+  "top_by_portfolio": [
+    {
+      "name": "UOB KAY HIAN PRIVATE LIMITED",
+      "portfolio_size": 65,
+      "total_pct_sum": 371.04,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "BANK OF SINGAPORE LIMITED",
+      "portfolio_size": 34,
+      "total_pct_sum": 132.17,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "PERUSAHAAN PERSEROAN (PERSERO) PT. ASABRI",
+      "portfolio_size": 33,
+      "total_pct_sum": 224.19,
+      "classification": "insurance",
+      "local_foreign": "L"
+    },
+    {
+      "name": "DJS KETENAGAKERJAAN PROGRAM JAMINAN HARI TUA",
+      "portfolio_size": 31,
+      "total_pct_sum": 72.96,
+      "classification": "insurance",
+      "local_foreign": "L"
+    },
+    {
+      "name": "UBS AG SINGAPORE BRANCH",
+      "portfolio_size": 28,
+      "total_pct_sum": 97.01,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "CGS INTERNATIONAL SECURITIES SINGAPORE PTE LTD",
+      "portfolio_size": 25,
+      "total_pct_sum": 135.99,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "DBS BANK LTD.",
+      "portfolio_size": 25,
+      "total_pct_sum": 85.33,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "GOVERNMENT OF NORWAY",
+      "portfolio_size": 24,
+      "total_pct_sum": 36.35,
+      "classification": "government",
+      "local_foreign": "F"
+    },
+    {
+      "name": "MAYBANK SECURITIES PTE. LTD.",
+      "portfolio_size": 23,
+      "total_pct_sum": 67.26,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "EMPLOYEES PROVIDENT FUND BOARD",
+      "portfolio_size": 22,
+      "total_pct_sum": 36.97,
+      "classification": "pension_fund",
+      "local_foreign": "F"
+    },
+    {
+      "name": "FIDELITY FUNDS",
+      "portfolio_size": 19,
+      "total_pct_sum": 59.52,
+      "classification": "mutual_fund",
+      "local_foreign": "F"
+    },
+    {
+      "name": "DRS SURONO SUBEKTI",
+      "portfolio_size": 18,
+      "total_pct_sum": 52.06,
+      "classification": "individual",
+      "local_foreign": "L"
+    },
+    {
+      "name": "JAKSA AGUNG MUDA BIDANG TINDAK PIDANA KHUSUS KEJAKSAAN REPUBLIK INDONESIA KEJAKSAAN REPUBLIK INDONESIA",
+      "portfolio_size": 17,
+      "total_pct_sum": 312.31,
+      "classification": "government",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PANIN SEKURITAS Tbk, PT",
+      "portfolio_size": 17,
+      "total_pct_sum": 47.73,
+      "classification": "broker",
+      "local_foreign": "L"
+    },
+    {
+      "name": "BANK JULIUS BAER & CO. LTD",
+      "portfolio_size": 15,
+      "total_pct_sum": 91.14,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "OCBC SECURITIES PRIVATE LIMITED",
+      "portfolio_size": 15,
+      "total_pct_sum": 70.24,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "SIAUW YUNUS SUBANDI",
+      "portfolio_size": 15,
+      "total_pct_sum": 45.19,
+      "classification": "individual",
+      "local_foreign": "L"
+    },
+    {
+      "name": "REKSA DANA EMCO MANTAP",
+      "portfolio_size": 15,
+      "total_pct_sum": 37.92,
+      "classification": "mutual_fund",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT TASPEN (PERSERO)",
+      "portfolio_size": 15,
+      "total_pct_sum": 30.41,
+      "classification": "insurance",
+      "local_foreign": "L"
+    },
+    {
+      "name": "REKSA DANA SUCORINVEST EQUITY PRIMA FUND",
+      "portfolio_size": 14,
+      "total_pct_sum": 37.27,
+      "classification": "mutual_fund",
+      "local_foreign": "L"
+    },
+    {
+      "name": "HAIYANTO",
+      "portfolio_size": 13,
+      "total_pct_sum": 81.43,
+      "classification": "individual",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT. ASURANSI JIWA IFG",
+      "portfolio_size": 13,
+      "total_pct_sum": 70.22,
+      "classification": "insurance",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT TRIMEGAH SEKURITAS INDONESIA TBK",
+      "portfolio_size": 13,
+      "total_pct_sum": 68.26,
+      "classification": "broker",
+      "local_foreign": "L"
+    },
+    {
+      "name": "DRS LO KHENG HONG",
+      "portfolio_size": 13,
+      "total_pct_sum": 41.41,
+      "classification": "individual",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PHILLIP SECURITIES PTE LTD",
+      "portfolio_size": 12,
+      "total_pct_sum": 92.42,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "PT. INDOLIFE PENSIONTAMA",
+      "portfolio_size": 12,
+      "total_pct_sum": 72.38,
+      "classification": "insurance",
+      "local_foreign": "L"
+    },
+    {
+      "name": "Reksa Dana Pan Arcadia Dana Saham Bertumbuh",
+      "portfolio_size": 12,
+      "total_pct_sum": 27.35,
+      "classification": "mutual_fund",
+      "local_foreign": "L"
+    },
+    {
+      "name": "DJONI",
+      "portfolio_size": 11,
+      "total_pct_sum": 43.38,
+      "classification": "individual",
+      "local_foreign": "L"
+    },
+    {
+      "name": "ASURANSI SIMAS JIWA",
+      "portfolio_size": 11,
+      "total_pct_sum": 34.65,
+      "classification": "insurance",
+      "local_foreign": "L"
+    },
+    {
+      "name": "UBS AG, LONDON",
+      "portfolio_size": 11,
+      "total_pct_sum": 27.89,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "REKSA DANA POOL ADVISTA KAPITAL OPTIMAL",
+      "portfolio_size": 11,
+      "total_pct_sum": 26.76,
+      "classification": "mutual_fund",
+      "local_foreign": "L"
+    },
+    {
+      "name": "MORGAN STANLEY AND CO INTERNATIONAL PLC",
+      "portfolio_size": 11,
+      "total_pct_sum": 26.45,
+      "classification": "company",
+      "local_foreign": "F"
+    },
+    {
+      "name": "PT. Victoria Investama Tbk",
+      "portfolio_size": 10,
+      "total_pct_sum": 157.5,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "LGT BANK AG",
+      "portfolio_size": 10,
+      "total_pct_sum": 29.66,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "KINGSWOOD UNION CORPORATION",
+      "portfolio_size": 10,
+      "total_pct_sum": 25.62,
+      "classification": "other",
+      "local_foreign": "F"
+    },
+    {
+      "name": "PT. PRUDENTIAL LIFE ASSURANCE",
+      "portfolio_size": 10,
+      "total_pct_sum": 12.91,
+      "classification": "insurance",
+      "local_foreign": "L"
+    },
+    {
+      "name": "UBS SWITZERLAND AG",
+      "portfolio_size": 9,
+      "total_pct_sum": 41.84,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "UNITED OVERSEAS BANK NOMINEES (PRIVATE) LIMITED",
+      "portfolio_size": 9,
+      "total_pct_sum": 31.01,
+      "classification": "company",
+      "local_foreign": "F"
+    },
+    {
+      "name": "PT ASKAR PELANGI ABADI",
+      "portfolio_size": 9,
+      "total_pct_sum": 22.69,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "REKSA DANA SUCORINVEST EQUITY FUND",
+      "portfolio_size": 9,
+      "total_pct_sum": 18.15,
+      "classification": "mutual_fund",
+      "local_foreign": "L"
+    },
+    {
+      "name": "DEUTSCHE BK AG (PRIVATE BANKING) SPORE WM CLIENT",
+      "portfolio_size": 9,
+      "total_pct_sum": 16.73,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "BANK DANAMON INDONESIA Tbk, PT - REGISTRAR",
+      "portfolio_size": 8,
+      "total_pct_sum": 98.01,
+      "classification": "broker",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT MAYBANK SEKURITAS INDONESIA - REGISTRAR",
+      "portfolio_size": 8,
+      "total_pct_sum": 56.58,
+      "classification": "broker",
+      "local_foreign": "L"
+    },
+    {
+      "name": "CGS INTERNATIONAL SEKURITAS INDONESIA",
+      "portfolio_size": 8,
+      "total_pct_sum": 54.97,
+      "classification": "broker",
+      "local_foreign": "L"
+    },
+    {
+      "name": "REKSA DANA NARADA SAHAM INDONESIA",
+      "portfolio_size": 8,
+      "total_pct_sum": 30.17,
+      "classification": "mutual_fund",
+      "local_foreign": "L"
+    },
+    {
+      "name": "INTERVENTURES CAPITAL PTE. LTD",
+      "portfolio_size": 8,
+      "total_pct_sum": 26.6,
+      "classification": "other",
+      "local_foreign": "F"
+    },
+    {
+      "name": "MANOJ PITAMBER NANWANI",
+      "portfolio_size": 8,
+      "total_pct_sum": 22.02,
+      "classification": "individual",
+      "local_foreign": "L"
+    },
+    {
+      "name": "UBS AG HONG KONG",
+      "portfolio_size": 8,
+      "total_pct_sum": 20.34,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "DBS VICKERS SECS SINGAPORE (PTE) LTD A/C CLIENTS",
+      "portfolio_size": 8,
+      "total_pct_sum": 18.49,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "REKSA DANA SUCORINVEST SHARIA EQUITY FUND",
+      "portfolio_size": 8,
+      "total_pct_sum": 17.39,
+      "classification": "mutual_fund",
+      "local_foreign": "L"
+    },
+    {
+      "name": "DJS KETENAGAKERJAAN PROGRAM JAMINAN PENSIUN",
+      "portfolio_size": 8,
+      "total_pct_sum": 13.81,
+      "classification": "insurance",
+      "local_foreign": "L"
+    },
+    {
+      "name": "BARCLAYS CAPITAL SECURITIES LIMITED",
+      "portfolio_size": 8,
+      "total_pct_sum": 13.54,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "PT DANANTARA ASSET MANAGEMENT (PERSERO)",
+      "portfolio_size": 7,
+      "total_pct_sum": 478.86,
+      "classification": "government",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT ASTRA INTERNATIONAL TBK",
+      "portfolio_size": 7,
+      "total_pct_sum": 305.88,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "SARATOGA INVESTAMA SEDAYA TBK PT",
+      "portfolio_size": 7,
+      "total_pct_sum": 104.95,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "UOB KAY HIAN (HONG KONG) LTD",
+      "portfolio_size": 7,
+      "total_pct_sum": 93.65,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "GARIBALDI THOHIR",
+      "portfolio_size": 7,
+      "total_pct_sum": 91.41,
+      "classification": "individual",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT YULIE SEKURITAS INDONESIA TBK",
+      "portfolio_size": 7,
+      "total_pct_sum": 36.31,
+      "classification": "broker",
+      "local_foreign": "L"
+    },
+    {
+      "name": "DANA PENSIUN KARYAWAN PANIN BANK",
+      "portfolio_size": 7,
+      "total_pct_sum": 35.46,
+      "classification": "pension_fund",
+      "local_foreign": "L"
+    },
+    {
+      "name": "UNION BANCAIRE PRIVEE, UBP SA SINGAPORE BRANCH",
+      "portfolio_size": 7,
+      "total_pct_sum": 34.51,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "CASCADEN INVESTMENT LIMITED",
+      "portfolio_size": 7,
+      "total_pct_sum": 25.47,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "CAPITAL LIFE SYARIAH, PT",
+      "portfolio_size": 7,
+      "total_pct_sum": 23.91,
+      "classification": "insurance",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT. ALANA CIPTA SELARAS",
+      "portfolio_size": 7,
+      "total_pct_sum": 23.17,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "HSBC LTD-SINGAPORE BRANCH PRIVATE BANKING DIVISION ACCOUNT CLIENTS",
+      "portfolio_size": 7,
+      "total_pct_sum": 19.33,
+      "classification": "company",
+      "local_foreign": "F"
+    },
+    {
+      "name": "SUWANTARA GOTAMA",
+      "portfolio_size": 7,
+      "total_pct_sum": 17.78,
+      "classification": "individual",
+      "local_foreign": "L"
+    },
+    {
+      "name": "RUDY SUSANTO",
+      "portfolio_size": 7,
+      "total_pct_sum": 16.15,
+      "classification": "individual",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT GLOBAL MEDIACOM TBK",
+      "portfolio_size": 6,
+      "total_pct_sum": 120.37,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT. MNC ASIA HOLDING TBK",
+      "portfolio_size": 6,
+      "total_pct_sum": 114.02,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "BP2S SG/BNP PARIBAS SINGAPORE BRANCH WEALTH MANAGEMENT",
+      "portfolio_size": 6,
+      "total_pct_sum": 109.11,
+      "classification": "other",
+      "local_foreign": "F"
+    },
+    {
+      "name": "BANGKOK BANK PUBLIC COMPANY LIMITED",
+      "portfolio_size": 6,
+      "total_pct_sum": 101.31,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "PT DWIMURIA INVESTAMA ANDALAN",
+      "portfolio_size": 6,
+      "total_pct_sum": 94.66,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "SUZANNA TANOJO",
+      "portfolio_size": 6,
+      "total_pct_sum": 56.73,
+      "classification": "individual",
+      "local_foreign": "L"
+    },
+    {
+      "name": "CITIBANK HONG KONG S/A PBG CLIENTS SG",
+      "portfolio_size": 6,
+      "total_pct_sum": 25.77,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "IR. T. PERMADI RACHMAT",
+      "portfolio_size": 6,
+      "total_pct_sum": 23.93,
+      "classification": "individual",
+      "local_foreign": "L"
+    },
+    {
+      "name": "DBS BANK LTD S/A ALBIZIA ASEAN OPPORTUNITIES FUND",
+      "portfolio_size": 6,
+      "total_pct_sum": 23.78,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "PT.Pacific Indocorpora Indonesia",
+      "portfolio_size": 6,
+      "total_pct_sum": 18.83,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT BIOFUEL INDO SUMATRA",
+      "portfolio_size": 6,
+      "total_pct_sum": 18.05,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT. KB VALBURY SEKURITAS",
+      "portfolio_size": 6,
+      "total_pct_sum": 18.03,
+      "classification": "broker",
+      "local_foreign": "L"
+    },
+    {
+      "name": "ZICO TRUST (S) LTD",
+      "portfolio_size": 6,
+      "total_pct_sum": 17.3,
+      "classification": "company",
+      "local_foreign": "F"
+    },
+    {
+      "name": "PETROMINE ENERGY TRADING",
+      "portfolio_size": 6,
+      "total_pct_sum": 16.66,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT. BINTANG MITRA SEMESTARAYA TBK",
+      "portfolio_size": 6,
+      "total_pct_sum": 16.02,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "ANDY TANUJAYA",
+      "portfolio_size": 6,
+      "total_pct_sum": 13.68,
+      "classification": "individual",
+      "local_foreign": "L"
+    },
+    {
+      "name": "REKSA DANA EMCO GROWTH FUND",
+      "portfolio_size": 6,
+      "total_pct_sum": 13.14,
+      "classification": "mutual_fund",
+      "local_foreign": "L"
+    },
+    {
+      "name": "REKSA DANA CAPITAL EQUITY FUND",
+      "portfolio_size": 6,
+      "total_pct_sum": 11.91,
+      "classification": "mutual_fund",
+      "local_foreign": "L"
+    },
+    {
+      "name": "REKSA DANA AURORA SMC EQUITY",
+      "portfolio_size": 6,
+      "total_pct_sum": 10.7,
+      "classification": "mutual_fund",
+      "local_foreign": "L"
+    },
+    {
+      "name": "STANDARD CHARTERED BANK (SINGAPORE) LIMITED",
+      "portfolio_size": 6,
+      "total_pct_sum": 10.36,
+      "classification": "broker",
+      "local_foreign": "F"
+    },
+    {
+      "name": "REKSA DANA PANIN DANA MAKSIMA",
+      "portfolio_size": 6,
+      "total_pct_sum": 9.28,
+      "classification": "mutual_fund",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PERUSAHAAN PERSEROAN (PERSERO) PT DANANTARA ASSET MANAGEMENT",
+      "portfolio_size": 5,
+      "total_pct_sum": 285.64,
+      "classification": "government",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT. MULTIPOLAR TBK",
+      "portfolio_size": 5,
+      "total_pct_sum": 227.81,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "BANK JULIUS BAER CO. LTD. S/A PT INTI ANUGRAH PROPERTINDO PLEDGED ACC",
+      "portfolio_size": 5,
+      "total_pct_sum": 194.14,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "BANK PAN INDONESIA TBK, PT",
+      "portfolio_size": 5,
+      "total_pct_sum": 180.61,
+      "classification": "broker",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT TIRTA ORISA YASA",
+      "portfolio_size": 5,
+      "total_pct_sum": 102.75,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT SINAR MAS MULTIARTHA Tbk",
+      "portfolio_size": 5,
+      "total_pct_sum": 82.61,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT ASURANSI CENTRAL ASIA",
+      "portfolio_size": 5,
+      "total_pct_sum": 80.94,
+      "classification": "insurance",
+      "local_foreign": "L"
+    },
+    {
+      "name": "HAPSORO",
+      "portfolio_size": 5,
+      "total_pct_sum": 77.59,
+      "classification": "individual",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT SATYA MULIA GEMA GEMILANG",
+      "portfolio_size": 5,
+      "total_pct_sum": 72.37,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "DMS INVESTAMA PT",
+      "portfolio_size": 5,
+      "total_pct_sum": 58.12,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PERSADA CAPITAL INVESTAMA",
+      "portfolio_size": 5,
+      "total_pct_sum": 50.61,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "PT SENTOSA BERSAMA MITRA",
+      "portfolio_size": 5,
+      "total_pct_sum": 48.34,
+      "classification": "company",
+      "local_foreign": "L"
+    },
+    {
+      "name": "GLAS TRUST (SINGAPORE) LTD.",
+      "portfolio_size": 5,
+      "total_pct_sum": 38.6,
+      "classification": "broker",
+      "local_foreign": "F"
+    }
+  ]
+}

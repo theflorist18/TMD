@@ -27,4 +27,8 @@ output/*
 !output/.gitkeep
 # Allow the main ownership table in git so GitHub Pages CI can copy it into dist (optional).
 !output/one_percent_holders.csv
-# Large files (e.g. investor_profiles.json) stay ignored unless you `git add -f` them on purpose.
+# Intelligence tab (GitHub Pages): commit if you want them public; watch GitHub file size limits.
+!output/investor_profiles.json
+!output/investor_groups.json
+!output/investor_group_candidates.json
+!output/investor_profiles_summary.json
