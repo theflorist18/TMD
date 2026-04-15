@@ -25,3 +25,6 @@ web/dist/
 # Generated datasets — run `python scripts/build_profiles.py` after clone
 output/*
 !output/.gitkeep
+# Allow the main ownership table in git so GitHub Pages CI can copy it into dist (optional).
+!output/one_percent_holders.csv
+# Large files (e.g. investor_profiles.json) stay ignored unless you `git add -f` them on purpose.
