@@ -12,6 +12,7 @@ import {
   IconTable,
   IconTrending,
 } from '@/components/Icons';
+import brandLogoUrl from '../../assets/TMD_Logo.png';
 
 export function Layout() {
   const { t, i18n } = useTranslation();
@@ -35,12 +36,7 @@ export function Layout() {
       <header>
         <div className="header-inner">
           <NavLink className="logo" to="/" aria-label="Go to home page">
-            <img
-              className="brand-logo"
-              src={`${import.meta.env.BASE_URL}assets/TMD_Logo.png`}
-              alt=""
-              aria-hidden
-            />
+            <img className="brand-logo" src={brandLogoUrl} alt="" aria-hidden />
             <span>{t('brand')}</span>
           </NavLink>
           <nav aria-label="Main navigation">
