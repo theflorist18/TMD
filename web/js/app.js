@@ -96,6 +96,13 @@ function applyI18n() {
     }
   });
 
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (!key) return;
+    const val = t(key);
+    if (val && val !== key) el.placeholder = val;
+  });
+
   document.getElementById('dateBadge').textContent = t('data_as_of') + ' 2026-03-31';
 
   const searchEl = document.getElementById('search');
@@ -2553,4 +2560,115 @@ window.navigateToInvestor = navigateToInvestor;
 window.navigateToStock = navigateToStock;
 window.scrollToGroup = scrollToGroup;
 
-init();
+/* ── Optional subscriber token gate (VITE_ACCESS_GATE=1) ───── */
+
+const ACCESS_SESSION_KEY = 'tmd_access_granted';
+
+/**
+ * Validates a subscriber token. Production builds should set VITE_TOKEN_VALIDATE_URL
+ * to a HTTPS endpoint you control (POST JSON `{ "token": "..." }`, respond 200 when valid).
+ * Tokens must never be shipped in the client bundle. sessionStorage clears when the tab closes.
+ */
+async function validateAccessToken(token) {
+  const url = import.meta.env.VITE_TOKEN_VALIDATE_URL;
+  const trimmed = token.trim();
+  if (!trimmed) return { ok: false, reason: 'empty' };
+
+  if (url) {
+    try {
+      const r = await fetch(String(url), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: trimmed }),
+      });
+      if (!r.ok) return { ok: false, reason: 'rejected' };
+      const ct = r.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        const j = await r.json();
+        if (j && j.valid === false) return { ok: false, reason: 'rejected' };
+      }
+      return { ok: true };
+    } catch {
+      return { ok: false, reason: 'network' };
+    }
+  }
+
+  if (import.meta.env.DEV && import.meta.env.VITE_DEV_TOKEN) {
+    return trimmed === String(import.meta.env.VITE_DEV_TOKEN)
+      ? { ok: true }
+      : { ok: false, reason: 'rejected' };
+  }
+
+  return { ok: false, reason: 'not_configured' };
+}
+
+function mountAccessGate() {
+  const root = document.createElement('div');
+  root.id = 'accessGateRoot';
+  root.className = 'access-gate';
+  root.innerHTML = `
+    <div class="access-gate-card" role="dialog" aria-modal="true" aria-labelledby="accessGateTitle">
+      <h1 id="accessGateTitle" data-i18n="access_title">Subscriber access</h1>
+      <p class="access-sub" data-i18n="access_sub"></p>
+      <form id="accessGateForm" autocomplete="off">
+        <label for="accessGateInput" data-i18n="access_token_label">Access token</label>
+        <input type="text" id="accessGateInput" name="token" spellcheck="false" data-i18n-placeholder="access_token_placeholder" aria-required="true">
+        <div class="access-gate-actions">
+          <button type="submit" class="btn-access" id="accessGateSubmit" data-i18n="access_submit">Continue</button>
+        </div>
+        <div class="access-gate-error" id="accessGateError" role="alert"></div>
+      </form>
+    </div>`;
+  document.body.appendChild(root);
+
+  applyI18n();
+
+  const form = document.getElementById('accessGateForm');
+  const errEl = document.getElementById('accessGateError');
+  const submitBtn = document.getElementById('accessGateSubmit');
+  const input = document.getElementById('accessGateInput');
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const token = input.value;
+    errEl.textContent = '';
+    if (!token.trim()) {
+      errEl.textContent = t('access_error_empty');
+      return;
+    }
+    submitBtn.disabled = true;
+    const prevLabel = submitBtn.textContent;
+    submitBtn.textContent = t('access_working');
+    const result = await validateAccessToken(token);
+    submitBtn.disabled = false;
+    submitBtn.textContent = prevLabel;
+    if (!result.ok) {
+      const key =
+        result.reason === 'empty' ? 'access_error_empty'
+        : result.reason === 'network' ? 'access_error_network'
+        : result.reason === 'not_configured' ? 'access_error_not_configured'
+        : 'access_error_rejected';
+      errEl.textContent = t(key);
+      return;
+    }
+    sessionStorage.setItem(ACCESS_SESSION_KEY, '1');
+    root.remove();
+    document.getElementById('loader')?.classList.remove('hidden');
+    init();
+  });
+}
+
+function bootstrapAccess() {
+  if (import.meta.env.VITE_ACCESS_GATE !== '1') {
+    init();
+    return;
+  }
+  if (sessionStorage.getItem(ACCESS_SESSION_KEY) === '1') {
+    init();
+    return;
+  }
+  document.getElementById('loader')?.classList.add('hidden');
+  mountAccessGate();
+}
+
+bootstrapAccess();

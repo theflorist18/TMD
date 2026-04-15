@@ -1,10 +1,31 @@
 # Local / CI: production-like stack (Nginx serves Vite dist + repo output/ at /output/)
+# Optional `api` service: Django JWT + gated files (split static React + API).
 # Hostinger VPS: same image and compose, or build once and `docker compose up -d`.
 services:
+  api:
+    profiles: ["api"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    ports:
+      - "${TMD_API_PORT:-8000}:8000"
+    environment:
+      # Use DJANGO_DEBUG=0 in production; set SUBSCRIBER_TOKEN_PEPPER to a long random secret.
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-1}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-change-me-in-production}
+      SUBSCRIBER_TOKEN_PEPPER: ${SUBSCRIBER_TOKEN_PEPPER:-docker-dev-pepper-change-for-prod}
+      TMD_DATA_ROOT: /data
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://127.0.0.1:8080,http://localhost:8080,http://127.0.0.1:5173,http://localhost:5173}
+    volumes:
+      - ./output:/data:ro
+
   tmd:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NGINX_CONF: nginx.conf
     ports:
       - "${TMD_PORT:-8080}:80"
     volumes:
@@ -16,6 +37,17 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+
+  # Static site without public /output/ (use with Django `api` profile and SPA pointed at API).
+  tmd-private:
+    profiles: ["private_static"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NGINX_CONF: nginx.no-output.conf
+    ports:
+      - "${TMD_PRIVATE_PORT:-8081}:80"
 
   smoke-test:
     image: curlimages/curl:8.11.1

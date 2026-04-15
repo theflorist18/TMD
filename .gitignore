@@ -6,6 +6,9 @@ debug-*.log
 .venv/
 venv/
 env/
+backend/.venv/
+backend/db.sqlite3
+backend/.env
 
 # GitNexus (local graph index; do not commit)
 .gitnexus/

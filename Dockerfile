@@ -7,7 +7,8 @@ COPY web/ ./
 RUN npm run build
 
 FROM nginx:1.27-alpine
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+ARG NGINX_CONF=nginx.conf
+COPY docker/${NGINX_CONF} /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/web/dist /usr/share/nginx/html
 RUN mkdir -p /usr/share/nginx/html/output
 EXPOSE 80

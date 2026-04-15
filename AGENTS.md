@@ -6,14 +6,17 @@
 |------|------|
 | `output/` | Generated datasets (CSV/JSON). The browser app reads from here. **Tracked in git:** only `output/.gitkeep`; run `python scripts/build_profiles.py` after clone to populate files (see `.gitignore`). |
 | `scripts/build_profiles.py` | Builds `investor_profiles.json`, `investor_groups.json` (per CLI flags), optional audit CSV/JSON, and **`investor_profiles_summary.json`** (small aggregate file for future Home/Explorer use). |
-| `web/index.html` | Thin HTML shell: fonts, D3 v7 CDN, link to `styles/app.css`, `script type="module"` → `js/app.js`. |
-| `web/styles/app.css` | Application styles (extracted from the former monolith). |
-| `web/js/app.js` | Main ES module: CSV load, explorer/holdings/market/intelligence UI, navigation, shared state. |
-| `web/js/i18n-data.js` | Exported `I18N` string tables (`en` / `id`). |
-| `web/js/charts/intel-charts.js` | Intelligence D3 charts only; loaded via **`import()`** when charts render. |
-| `web/vite.config.js` | Vite root = `web/`. **`base: './'`** for portable `dist/`. Plugin **`serve-repo-output`** serves repo `../output` at **`/output/*`** in **`vite dev`** and **`vite preview`**. |
+| `web/index.html` | HTML shell: fonts, link to `styles/app.css`, `script type="module"` → **`src/main.tsx`** (React). |
+| `web/src/` | **React + TypeScript** app: router pages, D3 via npm (`d3`), API client (`/api` proxy in dev). |
+| `web/src/i18n/resources.ts` | Copy of legacy `I18N` tables (same keys as `web/js/i18n-data.js`; prefer editing one source long-term). |
+| `web/styles/app.css` | Global application styles. |
+| `web/js/app.js` | **Legacy** vanilla module (pre–React split); kept for reference until fully retired. |
+| `web/js/i18n-data.js` | Legacy string tables (duplicated in `web/src/i18n/resources.ts` for react-i18next). |
+| `web/js/charts/intel-charts.js` | Legacy intel charts (superseded by `web/src/charts/intelCharts.ts`). |
+| `web/vite.config.ts` | Vite root = `web/`. **`base: './'`**. React plugin; **`serve-repo-output`** serves `../output` at **`/output/*`**; **`/api`** proxies to **`VITE_API_PROXY_TARGET`**. |
 | `web/package.json` | `npm run dev` \| `build` \| `preview`. |
-| `Dockerfile`, `docker-compose.yml`, `docker/nginx.conf` | **Production-like static serving:** Nginx + built `dist/` + **`/output/*` bind-mount** (same URL layout as `vite preview`). See **`docker/README.md`** for local smoke tests and Hostinger (VPS vs static). Root npm: `docker:build`, `docker:up`, `docker:test`. |
+| `backend/` | **Django + DRF**: JWT login (`POST /api/v1/auth/login/`), gated dataset files under `TMD_DATA_ROOT`, HMAC+pepper subscriber codes, admin mint, blacklist refresh rotation. See [SECURITY.md](SECURITY.md), `backend/.env.example`. Local API: set **`DJANGO_DEBUG=1`** (default is off). |
+| `Dockerfile`, `docker-compose.yml`, `docker/nginx.conf` | **Static:** Nginx + `dist/` + `/output/*`. Optional **`docker/Dockerfile.api`** + compose **`api`** profile for split deploy. See **`docker/README.md`**. |
 
 ## Data contracts (`output/`)
 
@@ -23,19 +26,17 @@
 
 ## URL resolution in the browser
 
-`web/js/app.js` defines:
+The React app uses **`web/src/api/client.ts`**: with a JWT it fetches datasets from **`/api/v1/datasets/...`** (proxied to Django in dev). Without auth (or with `VITE_DEV_SKIP_AUTH=1` in dev), it falls back to the repo **`output/`** tree via the same relative URL shape as before:
 
 ```js
-const OUTPUT_BASE = new URL('../../output/', window.location.href).href;
+new URL('../../output/', window.location.href).href;
 ```
-
-That resolves to the repo `output/` folder when the app is opened as `web/index.html`, as built `web/dist/index.html`, or over `http://localhost:5173/` / `4173/` (Vite). Prefer `new URL('<file>', OUTPUT_BASE)` for fetches.
 
 ## npm (from `web/`)
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173 — data at /output/* via Vite plugin
+npm run dev      # http://localhost:5173 — /output/* via plugin; /api → Django (VITE_API_PROXY_TARGET)
 npm run build    # static output in web/dist/
 npm run preview  # production build + same /output/* middleware
 ```
@@ -48,17 +49,19 @@ For production hosting without Node, deploy **`dist/`** contents and ensure **`o
 
 | Feature | Start here |
 |---------|------------|
-| Copy / translations | `web/js/i18n-data.js` |
-| Global layout, nav, init | `web/js/app.js` |
-| Intelligence D3 visuals | `web/js/charts/intel-charts.js` |
+| Copy / translations | `web/src/i18n/resources.ts` (sync with `web/js/i18n-data.js` if both exist) |
+| Global layout, nav, routes | `web/src/App.tsx`, `web/src/components/Layout.tsx` |
+| Pages (Home, Explorer, …) | `web/src/pages/*.tsx` |
+| Intelligence D3 visuals | `web/src/charts/intelCharts.ts` |
+| Force / pie charts (Explorer) | `web/src/charts/forceNetwork.ts`, `web/src/charts/pieDonut.ts` |
 | Styling | `web/styles/app.css` |
+| API client / auth | `web/src/api/client.ts`, `web/src/auth/AuthContext.tsx` |
+| Django API, tokens, gated files | `backend/core/` |
 | Profile/group pipeline | `scripts/build_profiles.py` |
-
-Further split into `web/js/pages/*.js` and `web/js/data/*.js` is optional; keep modules cohesive and under ~800 lines when extracting.
 
 ## D3
 
-Charts on Intelligence use **d3** from the CDN script tag in `index.html`. The lazy chunk only uses the global `d3`; do not duplicate a second D3 bundle unless you migrate to npm + Vite `optimizeDeps`.
+Charts import **`d3`** from npm in `web/src/charts/*` (bundled by Vite). Legacy `web/js/app.js` still assumed a global `d3` CDN script; the React shell does not load that CDN.
 
 ## GitNexus ([upstream](https://github.com/abhigyanpatwari/GitNexus))
 
