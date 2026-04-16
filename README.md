@@ -41,8 +41,35 @@ mkdir -p dist/output && cp ../output/* dist/output/
 | `VITE_ACCESS_GATE` | `1` = login UI + API datasets (you host the API). Omit for public static sites. |
 | `VITE_API_BASE_URL` | API origin when using the access gate. |
 | `VITE_DEV_SKIP_AUTH` | Dev only: skip `/access` when testing. |
+| `VITE_PLAUSIBLE_DOMAIN` | Optional. Plausible site domain (e.g. `youruser.github.io`) for privacy-friendly traffic stats. |
+| `VITE_GA_MEASUREMENT_ID` | Optional. Google Analytics 4 measurement ID (`G-…`) for traffic stats. |
 
 Use **`web/.env.local`** for local overrides (gitignored).
+
+## Traffic / analytics
+
+The app is a static SPA on GitHub Pages, so there is **no server access log** in this repo. To see **visits and navigation**, pick one or both:
+
+1. **[Plausible Analytics](https://plausible.io/)** — lightweight, no cookies by default; add your hostname in Plausible, then set `VITE_PLAUSIBLE_DOMAIN` at build time to that same hostname (for `https://user.github.io/RepoName` use domain `user.github.io` in Plausible; paths are tracked automatically).
+2. **Google Analytics 4** — create a GA4 web data stream, copy the **Measurement ID** (`G-…`), set `VITE_GA_MEASUREMENT_ID` at build time.
+
+SPA route changes are tracked automatically (`AnalyticsPageviews` + `initAnalytics` in `web/src/`).
+
+**GitHub Actions:** add repository **Variables** (or build `env:`) so Vite sees them during `npm run build:pages`, for example:
+
+```yaml
+- name: Install and build (static, no API)
+  working-directory: web
+  env:
+    VITE_BASE_URL: ${{ steps.pages_base.outputs.path }}
+    VITE_PLAUSIBLE_DOMAIN: ${{ vars.VITE_PLAUSIBLE_DOMAIN }}
+    VITE_GA_MEASUREMENT_ID: ${{ vars.VITE_GA_MEASUREMENT_ID }}
+  run: |
+    npm ci
+    npm run build:pages
+```
+
+Leave the variables empty or omit the lines to ship a build **without** analytics. Do not commit secrets; measurement IDs are public in the built JS anyway, but keeping them in Variables keeps the repo clean.
 
 ## Public data
 

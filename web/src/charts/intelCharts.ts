@@ -39,11 +39,11 @@ const STOCK_LF_FOREIGN = '#c0c0c0';
 
 /** Scroll-wide SVG: one column per stock, two vertical bars (local / foreign), shared Y scale. */
 export function renderIntelStockLfConcentration(
+  container: HTMLElement | null,
   data: IntelStockLfConcentration[],
   helpers: { t: (k: string) => string; formatPct: (n: number) => string }
 ) {
   const { t, formatPct } = helpers;
-  const container = document.getElementById('intelChartStockLFByStock');
   if (!container) return;
   container.innerHTML = '';
 
@@ -66,6 +66,10 @@ export function renderIntelStockLfConcentration(
     .append('svg')
     .attr('width', w)
     .attr('height', h)
+    .attr(
+      'style',
+      `width:${w}px;height:${h}px;min-width:${w}px;display:block;max-width:none;flex-shrink:0`
+    )
     .attr('role', 'img')
     .attr('aria-label', t('lf_concentration_by_stock'));
 

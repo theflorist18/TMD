@@ -50,6 +50,9 @@ jobs:
         working-directory: web
         env:
           VITE_BASE_URL: ${{ steps.pages_base.outputs.path }}
+          # Optional: set repository Variables (Settings → Secrets and variables → Actions → Variables)
+          VITE_PLAUSIBLE_DOMAIN: ${{ vars.VITE_PLAUSIBLE_DOMAIN }}
+          VITE_GA_MEASUREMENT_ID: ${{ vars.VITE_GA_MEASUREMENT_ID }}
         run: |
           npm ci
           npm run build:pages

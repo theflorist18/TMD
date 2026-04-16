@@ -2348,21 +2348,29 @@
   .intel-chart-body.intel-chart-body--stock-lf {
     min-height: 280px;
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     justify-content: center;
     padding: 12px 20px 20px;
   }
 
   .intel-stock-lf-scroll {
     width: 100%;
+    min-width: 0;
     min-height: 260px;
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
   }
 
-  .intel-stock-lf-scroll svg {
-    width: auto !important;
+  .intel-stock-lf-scroll > div {
+    display: inline-block;
+    min-height: 1px;
+    vertical-align: top;
+  }
+
+  .intel-stock-lf-widget .intel-chart-body.intel-chart-body--stock-lf .intel-stock-lf-scroll svg {
+    width: auto;
     max-width: none;
     height: auto;
     display: block;

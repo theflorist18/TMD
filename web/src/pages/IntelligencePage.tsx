@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -53,6 +53,7 @@ export function IntelligencePage() {
   const [dirPage, setDirPage] = useState(1);
   const [dirPageSize, setDirPageSize] = useState(25);
   const [loadKey, setLoadKey] = useState(0);
+  const stockLfChartMountRef = useRef<HTMLDivElement>(null);
 
   const typeLabel = useCallback((code: string) => t(`type_labels.${code}`) || code, [t]);
 
@@ -119,8 +120,9 @@ export function IntelligencePage() {
       }
       const pct = Number(r.percentage);
       const add = Number.isFinite(pct) ? pct : 0;
-      if (r.local_foreign === 'L') rec.local += add;
-      else if (r.local_foreign === 'F') rec.foreign += add;
+      const lf = (r.local_foreign || '').trim().toUpperCase();
+      if (lf === 'L' || lf === 'LOCAL') rec.local += add;
+      else if (lf === 'F' || lf === 'FOREIGN') rec.foreign += add;
     }
     return [...m.entries()]
       .map(([code, v]) => ({
@@ -132,11 +134,15 @@ export function IntelligencePage() {
       .sort((a, b) => a.code.localeCompare(b.code));
   }, [holdersState]);
 
-  useEffect(() => {
-    const el = document.getElementById('intelChartStockLFByStock');
-    if (el) el.innerHTML = '';
+  useLayoutEffect(() => {
+    const el = stockLfChartMountRef.current;
+    if (!el) return;
+    el.innerHTML = '';
     if (holdersState.status !== 'ready' || stockLfRows.length === 0) return;
-    renderIntelStockLfConcentration(stockLfRows, { t, formatPct });
+    renderIntelStockLfConcentration(el, stockLfRows, { t, formatPct });
+    return () => {
+      el.innerHTML = '';
+    };
   }, [holdersState, stockLfRows, t]);
 
   const stats = useMemo(() => {
@@ -340,7 +346,7 @@ export function IntelligencePage() {
             ) : null}
             {holdersState.status === 'ready' && stockLfRows.length > 0 ? (
               <div className="intel-stock-lf-scroll">
-                <div id="intelChartStockLFByStock" />
+                <div ref={stockLfChartMountRef} id="intelChartStockLFByStock" />
               </div>
             ) : null}
           </div>

@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AnalyticsPageviews } from './components/AnalyticsPageviews';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './auth/AuthContext';
@@ -20,7 +21,9 @@ export function App() {
   return (
     <AuthProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <Routes>
+        <>
+          <AnalyticsPageviews />
+          <Routes>
           <Route path="/access" element={<AccessPage />} />
           <Route
             element={
@@ -92,6 +95,7 @@ export function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
+        </>
       </BrowserRouter>
     </AuthProvider>
   );
