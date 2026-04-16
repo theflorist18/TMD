@@ -1,7 +1,7 @@
 export const I18N = {
   en: {
     brand: 'Transparent Market Data',
-    nav_home: 'Home', nav_explorer: 'Explorer', nav_holdings: 'Holdings', nav_market: 'Live Market', nav_intelligence: 'Intelligence', nav_logout: 'Log out',
+    nav_home: 'Home', nav_explorer: 'Explorer', nav_holdings: 'Holdings', nav_free_float: 'Free Float', nav_market: 'Live Market', nav_intelligence: 'Intelligence', nav_logout: 'Log out',
     lang_toggle_aria: 'Switch language',
     data_as_of: 'Data as of',
     hero_title: 'Transparent Market Data',
@@ -92,7 +92,7 @@ export const I18N = {
     intel_title: 'Investor Intelligence',
     intel_sub: 'Profiles, classification, and group analysis for all investors holding more than 1% stake in IDX-listed companies.',
     intel_groups_heuristic_notice:
-      'Verified group manifest is empty, so heuristic clusters from the pipeline are shown instead (same data as output/investor_group_candidates.json). Add entries to config/verified_groups.json and rebuild to publish verified groups only.',
+      'Verified group manifest is empty, so heuristic clusters are shown instead (same data as output/investor_group_candidates.json). To show only verified groups, replace output/investor_groups.json with your verified export.',
     by_investor_type: 'By Investor Type', local_vs_foreign: 'Local vs Foreign', top_nationalities: 'Top Nationalities',
     investor_directory: 'Investor Directory', group_analysis: 'Group Analysis',
     search_intel: 'Search by name, nationality, or domicile...', search_groups: 'Search groups by name...',
@@ -118,6 +118,21 @@ export const I18N = {
     rows: 'rows', row: 'row',
     failed_load: 'Failed to load data',
     failed_load_msg: 'Could not fetch the ownership dataset. Please check that output/one_percent_holders.csv exists (repo output/ next to web/) and reload the page.',
+    free_float_failed_msg:
+      'Could not load free float data. Ensure output/free_float.json exists next to your site build (commit it for GitHub Pages) and reload.',
+    free_float_sub:
+      'IDX free float disclosure by ticker: percentage, free-float shares, number of holders, and compliance status. Click a ticker to open it in Explorer.',
+    free_float_as_of: 'Report as of',
+    free_float_empty:
+      'No free float rows were found. Add output/free_float.json next to the app build and commit it for GitHub Pages.',
+    free_float_search_ph: 'Search ticker, issuer, or status…',
+    col_free_float_pct: 'Free float %',
+    col_free_float_shares: 'Free float shares',
+    col_free_float_holders: 'Free float holders',
+    col_compliance: 'Compliance',
+    explorer_free_float_title: 'Free float (IDX)',
+    explorer_free_float_no_row: 'No free float row for this ticker in the loaded dataset.',
+    tip_free_float_card: 'From output/free_float.json (IDX LBRE / free float disclosure).',
     failed_load_retry: 'Try again',
     failed_intel: 'Failed to load intelligence data',
     failed_intel_hint:
@@ -217,6 +232,9 @@ export const I18N = {
     },
     footer_data_source: 'Data sourced from IDX public filings',
     footer_disclaimer: 'For informational purposes only',
+    footer_not_advice:
+      'This site does not provide investment, legal, or tax advice. Nothing here is a recommendation to buy or sell any security. Do your own research before making decisions.',
+    footer_built_with: 'Developed using Cursor',
     access_title: 'Subscriber access',
     access_sub:
       'Enter your 9-character access code (letters and digits, no spaces). Only a secure hash of this code is stored on the server. Access lasts until you close this browser tab.',
@@ -234,7 +252,7 @@ export const I18N = {
   },
   id: {
     brand: 'Data Pasar Transparan',
-    nav_home: 'Beranda', nav_explorer: 'Penjelajah', nav_holdings: 'Kepemilikan', nav_market: 'Pasar', nav_intelligence: 'Intelijen', nav_logout: 'Keluar',
+    nav_home: 'Beranda', nav_explorer: 'Penjelajah', nav_holdings: 'Kepemilikan', nav_free_float: 'Free Float', nav_market: 'Pasar', nav_intelligence: 'Intelijen', nav_logout: 'Keluar',
     lang_toggle_aria: 'Ganti bahasa',
     data_as_of: 'Data per',
     hero_title: 'Data Pasar Transparan',
@@ -325,7 +343,7 @@ export const I18N = {
     intel_title: 'Intelijen Investor',
     intel_sub: 'Profil, klasifikasi, dan analisis kelompok untuk semua investor yang memiliki lebih dari 1% saham di perusahaan tercatat IDX.',
     intel_groups_heuristic_notice:
-      'Manifest grup terverifikasi kosong, jadi klaster heuristik dari pipeline ditampilkan (sama dengan output/investor_group_candidates.json). Tambahkan entri ke config/verified_groups.json lalu bangun ulang untuk hanya menerbitkan grup terverifikasi.',
+      'Manifest grup terverifikasi kosong, jadi klaster heuristik ditampilkan (sama dengan output/investor_group_candidates.json). Untuk hanya grup terverifikasi, ganti output/investor_groups.json dengan ekspor terverifikasi Anda.',
     by_investor_type: 'Berdasarkan Tipe Investor', local_vs_foreign: 'Lokal vs Asing', top_nationalities: 'Nasionalitas Teratas',
     investor_directory: 'Direktori Investor', group_analysis: 'Analisis Kelompok',
     search_intel: 'Cari berdasarkan nama, nasionalitas, atau domisili...', search_groups: 'Cari kelompok berdasarkan nama...',
@@ -351,6 +369,21 @@ export const I18N = {
     rows: 'baris', row: 'baris',
     failed_load: 'Gagal memuat data',
     failed_load_msg: 'Tidak dapat mengambil dataset kepemilikan. Pastikan output/one_percent_holders.csv ada (folder output/ di repo di samping web/) dan muat ulang halaman.',
+    free_float_failed_msg:
+      'Data free float tidak dapat dimuat. Pastikan output/free_float.json ada di build situs (commit untuk GitHub Pages) dan muat ulang.',
+    free_float_sub:
+      'Pengungkapan free float BEI per kode saham: persentase, lembar free float, jumlah pemegang, dan status pemenuhan. Klik kode untuk membuka di Penjelajah.',
+    free_float_as_of: 'Laporan per',
+    free_float_empty:
+      'Tidak ada baris free float. Tambahkan output/free_float.json di samping build aplikasi dan commit untuk GitHub Pages.',
+    free_float_search_ph: 'Cari kode, emiten, atau status…',
+    col_free_float_pct: 'Free float %',
+    col_free_float_shares: 'Lembar free float',
+    col_free_float_holders: 'Pemegang free float',
+    col_compliance: 'Pemenuhan',
+    explorer_free_float_title: 'Free float (BEI)',
+    explorer_free_float_no_row: 'Tidak ada baris free float untuk kode ini di dataset yang dimuat.',
+    tip_free_float_card: 'Dari output/free_float.json (pengungkapan LBRE / free float BEI).',
     failed_load_retry: 'Coba lagi',
     failed_intel: 'Gagal memuat data intelijen',
     failed_intel_hint:
@@ -450,6 +483,9 @@ export const I18N = {
     },
     footer_data_source: 'Data bersumber dari pengajuan publik IDX',
     footer_disclaimer: 'Hanya untuk tujuan informasi',
+    footer_not_advice:
+      'Situs ini bukan nasihat investasi, hukum, atau pajak. Bukan rekomendasi membeli atau menjual efek apa pun. Lakukan riset sendiri sebelum mengambil keputusan.',
+    footer_built_with: 'Dikembangkan dengan Cursor',
     access_title: 'Akses pelanggan',
     access_sub:
       'Masukkan kode akses 9 karakter Anda (huruf dan angka, tanpa spasi). Server hanya menyimpan hash aman dari kode ini. Akses berlaku sampai Anda menutup tab browser ini.',

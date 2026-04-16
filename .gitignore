@@ -32,3 +32,4 @@ output/*
 !output/investor_groups.json
 !output/investor_group_candidates.json
 !output/investor_profiles_summary.json
+!output/free_float.json

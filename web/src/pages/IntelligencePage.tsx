@@ -50,6 +50,7 @@ export function IntelligencePage() {
   });
   const [dirPage, setDirPage] = useState(1);
   const [dirPageSize, setDirPageSize] = useState(25);
+  const [loadKey, setLoadKey] = useState(0);
 
   const typeLabel = useCallback((code: string) => t(`type_labels.${code}`) || code, [t]);
 
@@ -61,11 +62,16 @@ export function IntelligencePage() {
           fetchDataset(intelProfilesUrl()),
           fetchDataset(intelGroupsUrl()),
         ]);
-        if (!pResp.ok || !gResp.ok) throw new Error(t('failed_intel'));
+        const httpErrs: string[] = [];
+        if (!pResp.ok) httpErrs.push(`investor_profiles.json → HTTP ${pResp.status}`);
+        if (!gResp.ok) httpErrs.push(`investor_groups.json → HTTP ${gResp.status}`);
+        if (httpErrs.length) throw new Error(httpErrs.join(' · '));
         const p = (await pResp.json()) as IntelProfile[];
         let g = (await gResp.json()) as IntelGroup[];
+        if (!Array.isArray(p)) throw new Error('investor_profiles.json: expected a JSON array');
+        if (!Array.isArray(g)) throw new Error('investor_groups.json: expected a JSON array');
         let fromCandidates = false;
-        if (!Array.isArray(g) || g.length === 0) {
+        if (g.length === 0) {
           const cResp = await fetchDataset(intelGroupCandidatesUrl());
           if (cResp.ok) {
             const cg = (await cResp.json()) as IntelGroup[];
@@ -87,7 +93,7 @@ export function IntelligencePage() {
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, [t, loadKey]);
 
   useEffect(() => {
     if (!profiles?.length) return;
@@ -176,9 +182,26 @@ export function IntelligencePage() {
     return (
       <section id="page-intelligence" className="page-section page-active">
         <div className="page-content">
-          <div className="error-banner">
+          <div className="error-banner" style={{ marginTop: 80 }}>
             <h3>{t('failed_intel')}</h3>
-            <p>{esc(err)}</p>
+            <p style={{ marginTop: 10 }}>{esc(err)}</p>
+            <p style={{ marginTop: 14, fontSize: 13, opacity: 0.85, lineHeight: 1.5 }}>
+              {t('failed_intel_hint')}
+            </p>
+            <p style={{ marginTop: 18 }}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setErr(null);
+                  setProfiles(null);
+                  setGroups(null);
+                  setLoadKey((k) => k + 1);
+                }}
+              >
+                {t('failed_load_retry')}
+              </button>
+            </p>
           </div>
         </div>
       </section>

@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { buildInvestorMap, buildStockMap, type HolderRow } from '@/domain/holders';
 import type { IntelGroup } from '@/domain/intelGroups';
 import { useHolders } from '@/context/HoldersDatasetContext';
+import { useFreeFloat } from '@/context/FreeFloatDatasetContext';
 import { formatInt, esc, formatPct } from '@/lib/format';
 import { getPaginationRange } from '@/lib/pagination';
 import {
@@ -35,6 +36,7 @@ export function ExplorerPage() {
   const navigate = useNavigate();
   const [sp, setSp] = useSearchParams();
   const { state, reload } = useHolders();
+  const { state: ffState } = useFreeFloat();
 
   const [searchMode, setSearchMode] = useState<SearchMode>('investor');
   const [q, setQ] = useState('');
@@ -752,6 +754,9 @@ export function ExplorerPage() {
 
   if (selectedStock) {
     const meta = stockMap.get(selectedStock);
+    const ffRow =
+      ffState.status === 'ready' ? ffState.byCode.get(selectedStock) : undefined;
+    const ffAsOf = ffState.status === 'ready' ? ffState.payload.as_of : null;
     return (
       <section id="page-explorer" className="page-section page-active">
         <div className="page-content">
@@ -767,6 +772,46 @@ export function ExplorerPage() {
                   <div className="sub">{esc(meta?.issuer ?? '')}</div>
                 </div>
               </div>
+            </div>
+            <div
+              className="card explorer-free-float-card"
+              style={{ marginBottom: 20 }}
+              data-tip={t('tip_free_float_card')}
+            >
+              <div className="card-title">{t('explorer_free_float_title')}</div>
+              {ffState.status === 'loading' || ffState.status === 'idle' ? (
+                <div className="widget-placeholder" style={{ minHeight: 48 }}>
+                  <div className="spinner" />
+                </div>
+              ) : ffState.status === 'error' ? (
+                <p style={{ opacity: 0.85, fontSize: 14 }}>{t('free_float_failed_msg')}</p>
+              ) : !ffRow ? (
+                <p style={{ opacity: 0.85, fontSize: 14 }}>{t('explorer_free_float_no_row')}</p>
+              ) : (
+                <div className="explorer-free-float-grid">
+                  <div>
+                    <div className="explorer-ff-label">{t('col_free_float_pct')}</div>
+                    <div className="explorer-ff-value">{formatPct(ffRow.free_float_pct)}</div>
+                  </div>
+                  <div>
+                    <div className="explorer-ff-label">{t('col_free_float_shares')}</div>
+                    <div className="explorer-ff-value">{formatInt(ffRow.free_float_shares)}</div>
+                  </div>
+                  <div>
+                    <div className="explorer-ff-label">{t('col_free_float_holders')}</div>
+                    <div className="explorer-ff-value">{formatInt(ffRow.free_float_holders)}</div>
+                  </div>
+                  <div>
+                    <div className="explorer-ff-label">{t('col_compliance')}</div>
+                    <div className="explorer-ff-value">{esc(ffRow.compliance_status || '—')}</div>
+                  </div>
+                  {ffAsOf ? (
+                    <div className="explorer-ff-asof">
+                      {t('free_float_as_of')} {ffAsOf}
+                    </div>
+                  ) : null}
+                </div>
+              )}
             </div>
             <div className="top-row top-row--explorer-graph-full">
               <div className="card card--graph">

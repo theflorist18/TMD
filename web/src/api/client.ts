@@ -210,3 +210,10 @@ export function intelGroupCandidatesUrl(): string {
   }
   return apiUrl('/api/v1/datasets/investor_group_candidates.json/');
 }
+
+export function freeFloatJsonUrl(): string {
+  if (devSkipAuth() || !useApiDatasetUrls()) {
+    return new URL('free_float.json', outputBaseHref()).href;
+  }
+  return apiUrl('/api/v1/datasets/free_float.json/');
+}

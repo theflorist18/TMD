@@ -9,6 +9,7 @@ import {
   IconBrain,
   IconCompass,
   IconHome,
+  IconPie,
   IconTable,
   IconTrending,
 } from '@/components/Icons';
@@ -67,6 +68,13 @@ export function Layout() {
             >
               <IconTable className="nav-icon" />
               {t('nav_holdings')}
+            </NavLink>
+            <NavLink
+              to="/free-float"
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            >
+              <IconPie className="nav-icon" />
+              {t('nav_free_float')}
             </NavLink>
             <NavLink
               to="/market"
@@ -128,12 +136,16 @@ export function Layout() {
       </main>
 
       <footer className="site-footer">
-        <div className="footer-inner">
-          <span>TMD — Transparent Market Data</span>
-          <span className="footer-sep">·</span>
-          <span>{t('footer_data_source')}</span>
-          <span className="footer-sep">·</span>
-          <span>{t('footer_disclaimer')}</span>
+        <div className="footer-inner footer-inner--stack">
+          <div className="footer-line">
+            <span>TMD — Transparent Market Data</span>
+            <span className="footer-sep">·</span>
+            <span>{t('footer_data_source')}</span>
+            <span className="footer-sep">·</span>
+            <span>{t('footer_disclaimer')}</span>
+          </div>
+          <p className="footer-not-advice">{t('footer_not_advice')}</p>
+          <div className="footer-built-with">{t('footer_built_with')}</div>
         </div>
       </footer>
 

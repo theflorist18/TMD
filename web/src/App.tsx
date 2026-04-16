@@ -4,11 +4,13 @@ import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './auth/AuthContext';
 import { HoldersDatasetProvider } from './context/HoldersDatasetContext';
+import { FreeFloatDatasetProvider } from './context/FreeFloatDatasetContext';
 import { AccessPage } from './pages/AccessPage';
 import { HomePage } from './pages/HomePage';
 import { ExplorerPage } from './pages/ExplorerPage';
 import { HoldingsPage } from './pages/HoldingsPage';
 import { MarketPage } from './pages/MarketPage';
+import { FreeFloatPage } from './pages/FreeFloatPage';
 
 const IntelligencePage = lazy(() =>
   import('./pages/IntelligencePage').then((m) => ({ default: m.IntelligencePage }))
@@ -23,7 +25,9 @@ export function App() {
           <Route
             element={
               <HoldersDatasetProvider>
-                <Layout />
+                <FreeFloatDatasetProvider>
+                  <Layout />
+                </FreeFloatDatasetProvider>
               </HoldersDatasetProvider>
             }
           >
@@ -48,6 +52,14 @@ export function App() {
               element={
                 <ProtectedRoute>
                   <HoldingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/free-float"
+              element={
+                <ProtectedRoute>
+                  <FreeFloatPage />
                 </ProtectedRoute>
               }
             />
