@@ -1,12 +1,94 @@
 import * as d3 from 'd3';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useFreeFloat } from '@/context/FreeFloatDatasetContext';
 import type { FreeFloatRow } from '@/domain/freeFloat';
+import {
+  applyFreeFloatFilters,
+  countFreeFloatFilterKeys,
+  type FreeFloatColumnFilters,
+} from '@/lib/freeFloatFilters';
 import { esc, formatInt, formatPct } from '@/lib/format';
+import type { RangeOp } from '@/lib/holdingsFilters';
+import { parseHoldingsFilterNum } from '@/lib/holdingsFilters';
 import { getPaginationRange } from '@/lib/pagination';
 import { IconSearch, IconSortAsc, IconSortDesc } from '@/components/Icons';
+
+type FfPanel = {
+  pctOp: RangeOp;
+  pct1: string;
+  pct2: string;
+  sharesOp: RangeOp;
+  shares1: string;
+  shares2: string;
+  holdersOp: RangeOp;
+  holders1: string;
+  holders2: string;
+};
+
+function emptyFfPanel(): FfPanel {
+  return {
+    pctOp: 'gte',
+    pct1: '',
+    pct2: '',
+    sharesOp: 'gte',
+    shares1: '',
+    shares2: '',
+    holdersOp: 'gte',
+    holders1: '',
+    holders2: '',
+  };
+}
+
+function ffAppliedFromPanel(p: FfPanel): FreeFloatColumnFilters {
+  const out: FreeFloatColumnFilters = {};
+  const pv1 = parseHoldingsFilterNum(p.pct1);
+  if (Number.isFinite(pv1)) {
+    const pv2 = parseHoldingsFilterNum(p.pct2);
+    out.free_float_pct = {
+      op: p.pctOp,
+      v1: pv1,
+      v2: p.pctOp === 'between' && Number.isFinite(pv2) ? pv2 : null,
+    };
+  }
+  const sv1 = parseHoldingsFilterNum(p.shares1);
+  if (Number.isFinite(sv1)) {
+    const sv2 = parseHoldingsFilterNum(p.shares2);
+    out.free_float_shares = {
+      op: p.sharesOp,
+      v1: sv1,
+      v2: p.sharesOp === 'between' && Number.isFinite(sv2) ? sv2 : null,
+    };
+  }
+  const hv1 = parseHoldingsFilterNum(p.holders1);
+  if (Number.isFinite(hv1)) {
+    const hv2 = parseHoldingsFilterNum(p.holders2);
+    out.free_float_holders = {
+      op: p.holdersOp,
+      v1: hv1,
+      v2: p.holdersOp === 'between' && Number.isFinite(hv2) ? hv2 : null,
+    };
+  }
+  return out;
+}
+
+function ffPanelFromApplied(ap: FreeFloatColumnFilters): FfPanel {
+  const pct = ap.free_float_pct;
+  const sh = ap.free_float_shares;
+  const ho = ap.free_float_holders;
+  return {
+    pctOp: pct?.op ?? 'gte',
+    pct1: pct != null ? String(pct.v1) : '',
+    pct2: pct?.v2 != null ? String(pct.v2) : '',
+    sharesOp: sh?.op ?? 'gte',
+    shares1: sh != null ? String(sh.v1) : '',
+    shares2: sh?.v2 != null ? String(sh.v2) : '',
+    holdersOp: ho?.op ?? 'gte',
+    holders1: ho != null ? String(ho.v1) : '',
+    holders2: ho?.v2 != null ? String(ho.v2) : '',
+  };
+}
 
 type SortKey =
   | 'share_code'
@@ -46,13 +128,17 @@ export function FreeFloatPage() {
   });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [panel, setPanel] = useState<FfPanel>(emptyFfPanel);
+  const [applied, setApplied] = useState<FreeFloatColumnFilters>({});
+  const prevFilterOpen = useRef(false);
 
   const allRows = useMemo(
     () => (state.status === 'ready' ? state.rows : []),
     [state]
   );
 
-  const filtered = useMemo(() => {
+  const searchFiltered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return allRows;
     return allRows.filter((r) => {
@@ -60,6 +146,13 @@ export function FreeFloatPage() {
       return hay.includes(s);
     });
   }, [allRows, q]);
+
+  const filtered = useMemo(
+    () => applyFreeFloatFilters(searchFiltered, applied),
+    [searchFiltered, applied]
+  );
+
+  const filterCount = countFreeFloatFilterKeys(applied);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -84,7 +177,14 @@ export function FreeFloatPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [q, filtered.length]);
+  }, [q, applied]);
+
+  useEffect(() => {
+    if (filterOpen && !prevFilterOpen.current) {
+      setPanel(ffPanelFromApplied(applied));
+    }
+    prevFilterOpen.current = filterOpen;
+  }, [filterOpen, applied]);
 
   const maxPctRaw = d3.max(filtered, (r) =>
     Number.isFinite(r.free_float_pct) ? r.free_float_pct : 0
@@ -133,15 +233,26 @@ export function FreeFloatPage() {
           <div className="holdings-title-row">
             <h2 id="freeFloatTitle">{t('nav_free_float')}</h2>
           </div>
-          <span className="row-count" id="freeFloatRowCount">
-            {asOf ? (
-              <>
-                {t('free_float_as_of')} {asOf}
-                {' · '}
-              </>
-            ) : null}
-            {formatInt(slice.total)} {t('rows')}
-          </span>
+          <div className="holdings-header-right">
+            <button
+              type="button"
+              className={`filter-toggle${filterCount > 0 ? ' has-filters' : ''}`}
+              aria-expanded={filterOpen}
+              onClick={() => setFilterOpen((o) => !o)}
+            >
+              {t('filters')}
+              <span className="filter-count">{filterCount}</span>
+            </button>
+            <span className="row-count" id="freeFloatRowCount">
+              {asOf ? (
+                <>
+                  {t('free_float_as_of')} {asOf}
+                  {' · '}
+                </>
+              ) : null}
+              {formatInt(slice.total)} {t('rows')}
+            </span>
+          </div>
         </div>
         <p style={{ marginBottom: 16, opacity: 0.88, maxWidth: '52rem' }}>{t('free_float_sub')}</p>
 
@@ -166,6 +277,145 @@ export function FreeFloatPage() {
                     aria-label={t('free_float_search_ph')}
                   />
                 </div>
+              </div>
+            </div>
+
+            <div id="freeFloatFilterPanel" className={`filter-panel${filterOpen ? ' open' : ''}`}>
+              <div className="filter-section">
+                <div className="filter-section-title">{t('numeric_filters')}</div>
+                <div className="filter-range-row">
+                  <div className="filter-range-item" data-field="free_float_pct">
+                    <label>{t('col_free_float_pct')}</label>
+                    <div className="filter-range">
+                      <select
+                        value={panel.pctOp}
+                        onChange={(e) =>
+                          setPanel((prev) => ({
+                            ...prev,
+                            pctOp: e.target.value as RangeOp,
+                          }))
+                        }
+                      >
+                        <option value="gte">{t('filter_op_gte')}</option>
+                        <option value="lte">{t('filter_op_lte')}</option>
+                        <option value="eq">{t('filter_op_eq')}</option>
+                        <option value="between">{t('filter_op_between')}</option>
+                      </select>
+                      <input
+                        className="range-val1"
+                        type="text"
+                        inputMode="decimal"
+                        value={panel.pct1}
+                        onChange={(e) => setPanel((prev) => ({ ...prev, pct1: e.target.value }))}
+                        placeholder="0"
+                      />
+                      <input
+                        className="range-val2"
+                        type="text"
+                        inputMode="decimal"
+                        value={panel.pct2}
+                        onChange={(e) => setPanel((prev) => ({ ...prev, pct2: e.target.value }))}
+                        placeholder="0"
+                        style={{ display: panel.pctOp === 'between' ? '' : 'none' }}
+                      />
+                    </div>
+                  </div>
+                  <div className="filter-range-item" data-field="free_float_shares">
+                    <label>{t('col_free_float_shares')}</label>
+                    <div className="filter-range">
+                      <select
+                        value={panel.sharesOp}
+                        onChange={(e) =>
+                          setPanel((prev) => ({
+                            ...prev,
+                            sharesOp: e.target.value as RangeOp,
+                          }))
+                        }
+                      >
+                        <option value="gte">{t('filter_op_gte')}</option>
+                        <option value="lte">{t('filter_op_lte')}</option>
+                        <option value="eq">{t('filter_op_eq')}</option>
+                        <option value="between">{t('filter_op_between')}</option>
+                      </select>
+                      <input
+                        className="range-val1"
+                        type="text"
+                        inputMode="numeric"
+                        value={panel.shares1}
+                        onChange={(e) => setPanel((prev) => ({ ...prev, shares1: e.target.value }))}
+                        placeholder="0"
+                      />
+                      <input
+                        className="range-val2"
+                        type="text"
+                        inputMode="numeric"
+                        value={panel.shares2}
+                        onChange={(e) => setPanel((prev) => ({ ...prev, shares2: e.target.value }))}
+                        placeholder="0"
+                        style={{ display: panel.sharesOp === 'between' ? '' : 'none' }}
+                      />
+                    </div>
+                  </div>
+                  <div className="filter-range-item" data-field="free_float_holders">
+                    <label>{t('col_free_float_holders')}</label>
+                    <div className="filter-range">
+                      <select
+                        value={panel.holdersOp}
+                        onChange={(e) =>
+                          setPanel((prev) => ({
+                            ...prev,
+                            holdersOp: e.target.value as RangeOp,
+                          }))
+                        }
+                      >
+                        <option value="gte">{t('filter_op_gte')}</option>
+                        <option value="lte">{t('filter_op_lte')}</option>
+                        <option value="eq">{t('filter_op_eq')}</option>
+                        <option value="between">{t('filter_op_between')}</option>
+                      </select>
+                      <input
+                        className="range-val1"
+                        type="text"
+                        inputMode="numeric"
+                        value={panel.holders1}
+                        onChange={(e) => setPanel((prev) => ({ ...prev, holders1: e.target.value }))}
+                        placeholder="0"
+                      />
+                      <input
+                        className="range-val2"
+                        type="text"
+                        inputMode="numeric"
+                        value={panel.holders2}
+                        onChange={(e) => setPanel((prev) => ({ ...prev, holders2: e.target.value }))}
+                        placeholder="0"
+                        style={{ display: panel.holdersOp === 'between' ? '' : 'none' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="filter-actions">
+                <button
+                  type="button"
+                  className="btn-apply"
+                  onClick={() => {
+                    setApplied(ffAppliedFromPanel(panel));
+                    setPage(1);
+                  }}
+                >
+                  {t('apply_filters')}
+                </button>
+                <button
+                  type="button"
+                  className="btn-clear"
+                  onClick={() => {
+                    setPanel(emptyFfPanel());
+                    setApplied({});
+                    setPage(1);
+                  }}
+                >
+                  {t('clear_all')}
+                </button>
               </div>
             </div>
 
