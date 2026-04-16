@@ -14,6 +14,13 @@ export type IntelProfile = {
   risk_flags?: string[];
 };
 
+export type IntelStockLfConcentration = {
+  code: string;
+  issuer: string;
+  localSum: number;
+  foreignSum: number;
+};
+
 export function renderIntelCharts(
   intelProfiles: IntelProfile[],
   helpers: {
@@ -25,6 +32,116 @@ export function renderIntelCharts(
   renderIntelTypeDonut(intelProfiles, typeLabel);
   renderIntelLFBar(intelProfiles, t);
   renderIntelNatBar(intelProfiles);
+}
+
+const STOCK_LF_LOCAL = '#5db8d9';
+const STOCK_LF_FOREIGN = '#c0c0c0';
+
+/** Scroll-wide SVG: one column per stock, two vertical bars (local / foreign), shared Y scale. */
+export function renderIntelStockLfConcentration(
+  data: IntelStockLfConcentration[],
+  helpers: { t: (k: string) => string; formatPct: (n: number) => string }
+) {
+  const { t, formatPct } = helpers;
+  const container = document.getElementById('intelChartStockLFByStock');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const colPitch = 50;
+  const barW = 15;
+  const barGap = 5;
+  const pairW = barW * 2 + barGap;
+  const margin = { top: 10, right: 16, bottom: 44, left: 36 };
+  const innerH = 200;
+  const innerW = data.length * colPitch;
+  const w = margin.left + innerW + margin.right;
+  const h = margin.top + innerH + margin.bottom;
+
+  const maxPerStock = d3.max(data, (d) => Math.max(d.localSum, d.foreignSum)) ?? 0;
+  const yMax = maxPerStock > 0 ? maxPerStock * 1.08 : 1;
+  const y = d3.scaleLinear().domain([0, yMax]).range([innerH, 0]);
+
+  const svg = d3
+    .select(container)
+    .append('svg')
+    .attr('width', w)
+    .attr('height', h)
+    .attr('role', 'img')
+    .attr('aria-label', t('lf_concentration_by_stock'));
+
+  const chart = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
+
+  const yGrid = d3
+    .axisLeft(y)
+    .ticks(4)
+    .tickSize(-innerW)
+    .tickFormat((v) => formatPct(Number(v)));
+  chart
+    .append('g')
+    .attr('class', 'intel-stock-lf-ygrid')
+    .call(yGrid)
+    .call((g) => g.select('.domain').remove())
+    .selectAll('.tick line')
+    .attr('stroke', 'var(--border)')
+    .attr('stroke-opacity', 0.45);
+  chart.selectAll('.intel-stock-lf-ygrid .tick text').attr('opacity', 0);
+
+  data.forEach((d, i) => {
+    const cx = i * colPitch + colPitch / 2;
+    const xLocal = cx - pairW / 2;
+    const xForeign = xLocal + barW + barGap;
+
+    const yL = y(Math.max(0, d.localSum));
+    const yF = y(Math.max(0, d.foreignSum));
+    const hL = Math.max(0, innerH - yL);
+    const hF = Math.max(0, innerH - yF);
+
+    const tipLocal = `${d.code} — ${t('local')}: ${formatPct(d.localSum)}`;
+    const tipForeign = `${d.code} — ${t('foreign')}: ${formatPct(d.foreignSum)}`;
+    const tipIssuer = d.issuer ? `${d.issuer}\n` : '';
+
+    const rL = chart
+      .append('rect')
+      .attr('x', xLocal)
+      .attr('y', yL)
+      .attr('width', barW)
+      .attr('height', hL)
+      .attr('fill', STOCK_LF_LOCAL)
+      .attr('rx', 3);
+    rL.append('title').text(`${tipIssuer}${tipLocal}`);
+
+    const rF = chart
+      .append('rect')
+      .attr('x', xForeign)
+      .attr('y', yF)
+      .attr('width', barW)
+      .attr('height', hF)
+      .attr('fill', STOCK_LF_FOREIGN)
+      .attr('rx', 3);
+    rF.append('title').text(`${tipIssuer}${tipForeign}`);
+
+    chart
+      .append('text')
+      .attr('x', cx)
+      .attr('y', innerH + 18)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'var(--text-dim)')
+      .attr('font-size', 10)
+      .attr('font-weight', 600)
+      .attr('font-family', 'Inter, sans-serif')
+      .text(d.code);
+  });
+
+  const yLabels = d3.axisLeft(y).ticks(4).tickSize(0).tickFormat((v) => formatPct(Number(v)));
+  chart
+    .append('g')
+    .attr('class', 'intel-stock-lf-yaxis')
+    .call(yLabels)
+    .call((g) => g.select('.domain').remove());
+  chart
+    .selectAll('.intel-stock-lf-yaxis .tick text')
+    .attr('fill', 'var(--text-muted)')
+    .attr('font-size', 10);
 }
 
 function renderIntelTypeDonut(

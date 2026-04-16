@@ -2307,6 +2307,80 @@
 
   .intel-chart-body svg { width: 100%; }
 
+  .intel-stock-lf-widget {
+    margin-bottom: 32px;
+  }
+
+  .intel-stock-lf-sub {
+    margin: 0;
+    padding: 0 20px 8px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--text-muted);
+  }
+
+  .intel-stock-lf-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 0 20px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+  }
+
+  .intel-stock-lf-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .intel-stock-lf-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .intel-stock-lf-swatch--local { background: #5db8d9; }
+  .intel-stock-lf-swatch--foreign { background: #c0c0c0; }
+
+  .intel-chart-body.intel-chart-body--stock-lf {
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px 20px;
+  }
+
+  .intel-stock-lf-scroll {
+    width: 100%;
+    min-height: 260px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .intel-stock-lf-scroll svg {
+    width: auto !important;
+    max-width: none;
+    height: auto;
+    display: block;
+  }
+
+  .intel-stock-lf-placeholder {
+    min-height: 200px;
+  }
+
+  .intel-stock-lf-error,
+  .intel-stock-lf-empty {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 24px 12px;
+  }
+
   .intel-section-title {
     font-size: 18px;
     font-weight: 700;

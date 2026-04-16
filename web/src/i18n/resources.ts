@@ -94,6 +94,9 @@ export const I18N = {
     intel_groups_heuristic_notice:
       'Verified group manifest is empty, so heuristic clusters are shown instead (same data as output/investor_group_candidates.json). To show only verified groups, replace output/investor_groups.json with your verified export.',
     by_investor_type: 'By Investor Type', local_vs_foreign: 'Local vs Foreign', top_nationalities: 'Top Nationalities',
+    lf_concentration_by_stock: 'Local vs foreign concentration by stock',
+    lf_concentration_by_stock_sub:
+      'Sum of reported ownership % among >1% holders in the loaded dataset, split by local vs foreign classification. Taller bars mean higher concentration on the same vertical scale across all tickers.',
     investor_directory: 'Investor Directory', group_analysis: 'Group Analysis',
     search_intel: 'Search by name, nationality, or domicile...', search_groups: 'Search groups by name...',
     detected_groups: 'Detected Groups',
@@ -345,6 +348,9 @@ export const I18N = {
     intel_groups_heuristic_notice:
       'Manifest grup terverifikasi kosong, jadi klaster heuristik ditampilkan (sama dengan output/investor_group_candidates.json). Untuk hanya grup terverifikasi, ganti output/investor_groups.json dengan ekspor terverifikasi Anda.',
     by_investor_type: 'Berdasarkan Tipe Investor', local_vs_foreign: 'Lokal vs Asing', top_nationalities: 'Nasionalitas Teratas',
+    lf_concentration_by_stock: 'Konsentrasi lokal vs asing per saham',
+    lf_concentration_by_stock_sub:
+      'Jumlah % kepemilikan yang dilaporkan untuk pemegang >1% pada dataset yang dimuat, dipisah berdasarkan klasifikasi lokal vs asing. Batang lebih tinggi berarti konsentrasi lebih besar pada skala vertikal yang sama untuk semua kode saham.',
     investor_directory: 'Direktori Investor', group_analysis: 'Analisis Kelompok',
     search_intel: 'Cari berdasarkan nama, nasionalitas, atau domisili...', search_groups: 'Cari kelompok berdasarkan nama...',
     detected_groups: 'Kelompok Terdeteksi',

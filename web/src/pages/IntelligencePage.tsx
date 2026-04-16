@@ -10,9 +10,10 @@ import {
 import { formatInt, esc, formatPct } from '@/lib/format';
 import type { IntelGroup } from '@/domain/intelGroups';
 import { getPaginationRange } from '@/lib/pagination';
-import type { IntelProfile } from '@/charts/intelCharts';
-import { renderIntelCharts } from '@/charts/intelCharts';
+import type { IntelProfile, IntelStockLfConcentration } from '@/charts/intelCharts';
+import { renderIntelCharts, renderIntelStockLfConcentration } from '@/charts/intelCharts';
 import { IconSearch, IconSortAsc, IconSortDesc } from '@/components/Icons';
+import { useHolders } from '@/context/HoldersDatasetContext';
 
 const INTEL_DIR_COLS = [
   { key: 'name', lk: 'tab_investor', tk: 'investor', numeric: false },
@@ -37,6 +38,7 @@ function groupLabelFor(groups: IntelGroup[], gid?: string): string {
 
 export function IntelligencePage() {
   const { t } = useTranslation();
+  const { state: holdersState } = useHolders();
   const [profiles, setProfiles] = useState<IntelProfile[] | null>(null);
   const [groups, setGroups] = useState<IntelGroup[] | null>(null);
   const [groupsFromCandidates, setGroupsFromCandidates] = useState(false);
@@ -103,6 +105,39 @@ export function IntelligencePage() {
     });
     renderIntelCharts(profiles, { t, typeLabel });
   }, [profiles, t, typeLabel]);
+
+  const stockLfRows = useMemo((): IntelStockLfConcentration[] => {
+    if (holdersState.status !== 'ready') return [];
+    const m = new Map<string, { issuer: string; local: number; foreign: number }>();
+    for (const r of holdersState.rows) {
+      const code = r.share_code?.trim();
+      if (!code) continue;
+      let rec = m.get(code);
+      if (!rec) {
+        rec = { issuer: r.issuer_name || '', local: 0, foreign: 0 };
+        m.set(code, rec);
+      }
+      const pct = Number(r.percentage);
+      const add = Number.isFinite(pct) ? pct : 0;
+      if (r.local_foreign === 'L') rec.local += add;
+      else if (r.local_foreign === 'F') rec.foreign += add;
+    }
+    return [...m.entries()]
+      .map(([code, v]) => ({
+        code,
+        issuer: v.issuer,
+        localSum: v.local,
+        foreignSum: v.foreign,
+      }))
+      .sort((a, b) => a.code.localeCompare(b.code));
+  }, [holdersState]);
+
+  useEffect(() => {
+    const el = document.getElementById('intelChartStockLFByStock');
+    if (el) el.innerHTML = '';
+    if (holdersState.status !== 'ready' || stockLfRows.length === 0) return;
+    renderIntelStockLfConcentration(stockLfRows, { t, formatPct });
+  }, [holdersState, stockLfRows, t]);
 
   const stats = useMemo(() => {
     if (!profiles?.length) return null;
@@ -275,6 +310,39 @@ export function IntelligencePage() {
           <div className="intel-chart-card">
             <div className="card-title">{t('top_nationalities')}</div>
             <div className="intel-chart-body" id="intelChartNat" />
+          </div>
+        </div>
+
+        <div className="intel-chart-card intel-stock-lf-widget">
+          <div className="card-title">{t('lf_concentration_by_stock')}</div>
+          <p className="intel-stock-lf-sub">{t('lf_concentration_by_stock_sub')}</p>
+          <div className="intel-stock-lf-legend" aria-hidden>
+            <span className="intel-stock-lf-legend-item">
+              <span className="intel-stock-lf-swatch intel-stock-lf-swatch--local" />
+              {t('local')}
+            </span>
+            <span className="intel-stock-lf-legend-item">
+              <span className="intel-stock-lf-swatch intel-stock-lf-swatch--foreign" />
+              {t('foreign')}
+            </span>
+          </div>
+          <div className="intel-chart-body intel-chart-body--stock-lf">
+            {holdersState.status === 'loading' || holdersState.status === 'idle' ? (
+              <div className="widget-placeholder intel-stock-lf-placeholder">
+                <div className="spinner" />
+              </div>
+            ) : null}
+            {holdersState.status === 'error' ? (
+              <p className="intel-stock-lf-error">{esc(holdersState.message)}</p>
+            ) : null}
+            {holdersState.status === 'ready' && stockLfRows.length === 0 ? (
+              <p className="intel-stock-lf-empty">{t('no_results')}</p>
+            ) : null}
+            {holdersState.status === 'ready' && stockLfRows.length > 0 ? (
+              <div className="intel-stock-lf-scroll">
+                <div id="intelChartStockLFByStock" />
+              </div>
+            ) : null}
           </div>
         </div>
 
